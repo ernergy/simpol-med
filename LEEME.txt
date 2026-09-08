@@ -1,0 +1,35 @@
+SIMPLE WEB CONTROL REAL — FIX
+
+Este paquete reemplaza la web estática de demostración.
+
+Sube a GitHub reemplazando exactamente:
+web/app/page.tsx
+web/app/globals.css
+web/app/layout.tsx
+
+Después en Android Studio, estando en la carpeta principal SIMPLE:
+git pull origin main
+
+Luego entra a web:
+cd web
+
+Detén el servidor viejo con:
+Ctrl + C
+
+Y vuelve a iniciar:
+npm run dev
+
+Abre:
+http://localhost:3000
+
+Debe aparecer primero una pantalla de LOGIN de SIMPLE Control.
+Ya no deben aparecer 1,248 usuarios ni otros números de demostración.
+
+IMPORTANTE:
+Tu archivo web/.env.local NO se reemplaza ni se toca.
+Conserva la configuración que ya pusiste.
+
+Para entrar:
+Usa una cuenta real de SIMPLE cuyo profiles.is_admin sea true en Supabase.
+
+Después de entrar, el panel mostrará datos reales de ai_usage_logs.

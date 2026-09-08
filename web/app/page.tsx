@@ -52,8 +52,14 @@ export default function Home() {
   }, [token]);
 
   async function login() {
+    if (!supabaseUrl || !supabaseKey) {
+      setError("Falta configurar Supabase en web/.env.local.");
+      return;
+    }
+
     setLoading(true);
     setError("");
+
     try {
       const response = await fetch(
         `${supabaseUrl}/auth/v1/token?grant_type=password`,
@@ -68,8 +74,11 @@ export default function Home() {
       );
 
       const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(data?.error_description || data?.msg || "No se pudo ingresar.");
+        throw new Error(
+          data?.error_description || data?.msg || "No se pudo ingresar."
+        );
       }
 
       localStorage.setItem("simple_admin_token", data.access_token);
@@ -84,6 +93,7 @@ export default function Home() {
   async function loadSummary(accessToken: string) {
     setLoading(true);
     setError("");
+
     try {
       const response = await fetch(
         `${supabaseUrl}/rest/v1/rpc/get_ai_usage_summary`,
@@ -106,15 +116,19 @@ export default function Home() {
           localStorage.removeItem("simple_admin_token");
           setToken(null);
         }
+
         if (String(data?.message || "").includes("not_authorized")) {
           throw new Error(
-            "Tu cuenta existe, pero todavía no está marcada como administrador en Supabase."
+            "Tu usuario todavía no está marcado como administrador en Supabase."
           );
         }
-        throw new Error(data?.message || "No se pudieron cargar los datos.");
+
+        throw new Error(
+          data?.message || "No se pudieron cargar los datos de consumo."
+        );
       }
 
-      setSummary(data);
+      setSummary(data as Summary);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al cargar datos.");
     } finally {
@@ -126,11 +140,12 @@ export default function Home() {
     localStorage.removeItem("simple_admin_token");
     setToken(null);
     setSummary(null);
+    setEmail("");
+    setPassword("");
   }
 
   const projected1000 = useMemo(() => {
-    const avg = Number(summary?.avg_cost_per_request || 0);
-    return avg * 1000;
+    return Number(summary?.avg_cost_per_request || 0) * 1000;
   }, [summary]);
 
   if (!token) {
@@ -139,15 +154,27 @@ export default function Home() {
         <section className="loginCard">
           <div className="logo">💡</div>
           <h1>SIMPLE Control</h1>
-          <p>Panel administrativo de consumo y costos de inteligencia artificial.</p>
+          <p>Panel real de costos y consumo de inteligencia artificial.</p>
 
           <label>Correo administrador</label>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" />
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            placeholder="correo@ejemplo.com"
+          />
 
           <label>Contraseña</label>
-          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" />
+          <input
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+          />
 
-          <button onClick={login} disabled={loading || !email || !password}>
+          <button
+            onClick={login}
+            disabled={loading || !email || !password}
+          >
             {loading ? "INGRESANDO..." : "INGRESAR"}
           </button>
 
@@ -170,22 +197,28 @@ export default function Home() {
 
         <nav>
           <button className="active">📊 Costos IA</button>
-          <button>👥 Usuarios</button>
-          <button>🪙 Créditos</button>
-          <button>📄 Resúmenes</button>
-          <button>⚙️ Configuración</button>
+          <button disabled>👥 Usuarios</button>
+          <button disabled>🪙 Créditos</button>
+          <button disabled>📄 Resúmenes</button>
+          <button disabled>⚙️ Configuración</button>
         </nav>
 
-        <button className="logout" onClick={logout}>Cerrar sesión</button>
+        <button className="logout" onClick={logout}>
+          Cerrar sesión
+        </button>
       </aside>
 
       <section className="content">
         <header>
           <div>
             <h1>Control de costos IA</h1>
-            <p>Uso real registrado por SIMPLE.</p>
+            <p>Datos reales registrados por SIMPLE.</p>
           </div>
-          <button className="refresh" onClick={() => token && loadSummary(token)}>
+
+          <button
+            className="refresh"
+            onClick={() => token && loadSummary(token)}
+          >
             {loading ? "Actualizando..." : "Actualizar"}
           </button>
         </header>
@@ -195,93 +228,149 @@ export default function Home() {
         {summary && (
           <>
             <div className="metrics">
-              <Metric title="Costo acumulado" value={money(summary.total_cost_usd)} note="Desde que activamos medición" />
-              <Metric title="Costo hoy" value={money(summary.today_cost_usd)} note="Consumo del día" />
-              <Metric title="Solicitudes" value={format(summary.total_requests)} note="Consultas reales a OpenAI" />
-              <Metric title="Costo promedio" value={money(summary.avg_cost_per_request)} note="Por solicitud" />
+              <Metric
+                title="Costo acumulado"
+                value={money(summary.total_cost_usd)}
+                note="Desde que activamos medición"
+              />
+              <Metric
+                title="Costo hoy"
+                value={money(summary.today_cost_usd)}
+                note="Consumo del día"
+              />
+              <Metric
+                title="Solicitudes"
+                value={format(summary.total_requests)}
+                note="Consultas reales a OpenAI"
+              />
+              <Metric
+                title="Costo promedio"
+                value={money(summary.avg_cost_per_request)}
+                note="Por solicitud"
+              />
             </div>
 
             <div className="metrics secondary">
-              <Metric title="Tokens entrada" value={format(summary.total_input_tokens)} note={`Caché: ${format(summary.total_cached_input_tokens)}`} />
-              <Metric title="Tokens salida" value={format(summary.total_output_tokens)} note="Texto generado" />
-              <Metric title="Últimos 7 días" value={money(summary.last_7_days_cost_usd)} note="Costo acumulado semanal" />
-              <Metric title="Proyección 1.000 consultas" value={money(projected1000)} note="Con el promedio actual" />
+              <Metric
+                title="Tokens entrada"
+                value={format(summary.total_input_tokens)}
+                note={`Caché: ${format(summary.total_cached_input_tokens)}`}
+              />
+              <Metric
+                title="Tokens salida"
+                value={format(summary.total_output_tokens)}
+                note="Texto generado"
+              />
+              <Metric
+                title="Últimos 7 días"
+                value={money(summary.last_7_days_cost_usd)}
+                note="Costo semanal"
+              />
+              <Metric
+                title="Proyección 1.000 consultas"
+                value={money(projected1000)}
+                note="Con el promedio actual"
+              />
             </div>
 
             <section className="panel">
-              <div className="panelHeader">
-                <div>
-                  <h2>¿Cuánto deberíamos cobrar?</h2>
-                  <p>Este panel irá tomando decisiones con datos reales.</p>
-                </div>
-              </div>
+              <h2>Referencia para definir nuestros créditos</h2>
+              <p>
+                Estas cifras usan el costo real promedio observado. Todavía no
+                son el precio final al cliente.
+              </p>
 
               <div className="pricingGrid">
-                <PriceBox multiplier={3} avg={summary.avg_cost_per_request} label="Margen x3" />
-                <PriceBox multiplier={5} avg={summary.avg_cost_per_request} label="Margen x5" />
-                <PriceBox multiplier={10} avg={summary.avg_cost_per_request} label="Margen x10" />
+                <PriceBox
+                  multiplier={3}
+                  avg={summary.avg_cost_per_request}
+                  label="Costo x3"
+                />
+                <PriceBox
+                  multiplier={5}
+                  avg={summary.avg_cost_per_request}
+                  label="Costo x5"
+                />
+                <PriceBox
+                  multiplier={10}
+                  avg={summary.avg_cost_per_request}
+                  label="Costo x10"
+                />
               </div>
 
               <p className="hint">
-                Estas cifras solo consideran el costo de IA. Antes de fijar el precio final añadiremos almacenamiento,
-                generación de PowerPoint, infraestructura, pagos y margen comercial.
+                Luego añadiremos almacenamiento, procesamiento de PDF,
+                PowerPoint, infraestructura, comisiones de pago y margen.
               </p>
             </section>
 
             <section className="panel">
-              <h2>Últimas consultas</h2>
-              <div className="tableWrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Modelo</th>
-                      <th>Libro</th>
-                      <th>Entrada</th>
-                      <th>Salida</th>
-                      <th>Total tokens</th>
-                      <th>Costo</th>
-                      <th>Tiempo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(summary.recent || []).map((row) => (
-                      <tr key={row.id}>
-                        <td>{new Date(row.created_at).toLocaleString("es-BO")}</td>
-                        <td>{row.model}</td>
-                        <td>{row.book_name || "—"}</td>
-                        <td>{format(row.input_tokens)}</td>
-                        <td>{format(row.output_tokens)}</td>
-                        <td>{format(row.total_tokens)}</td>
-                        <td>{money(row.estimated_cost_usd)}</td>
-                        <td>{row.request_ms ? `${(row.request_ms / 1000).toFixed(1)} s` : "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+              <h2>Últimas consultas reales</h2>
 
-            <section className="panel info">
-              <h2>Tarifa usada para la estimación</h2>
-              <p>
-                GPT‑5.6 Luna: USD 0,20 / 1M tokens de entrada, USD 0,02 / 1M de entrada en caché
-                y USD 1,20 / 1M tokens de salida. Para solicitudes de contexto muy largo, el backend
-                aplica el multiplicador correspondiente.
-              </p>
+              {summary.recent?.length ? (
+                <div className="tableWrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Modelo</th>
+                        <th>Libro</th>
+                        <th>Entrada</th>
+                        <th>Salida</th>
+                        <th>Total</th>
+                        <th>Costo</th>
+                        <th>Tiempo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary.recent.map((row) => (
+                        <tr key={row.id}>
+                          <td>
+                            {new Date(row.created_at).toLocaleString("es-BO")}
+                          </td>
+                          <td>{row.model}</td>
+                          <td>{row.book_name || "—"}</td>
+                          <td>{format(row.input_tokens)}</td>
+                          <td>{format(row.output_tokens)}</td>
+                          <td>{format(row.total_tokens)}</td>
+                          <td>{money(row.estimated_cost_usd)}</td>
+                          <td>
+                            {row.request_ms
+                              ? `${(row.request_ms / 1000).toFixed(1)} s`
+                              : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="empty">
+                  Aún no hay consultas registradas después de activar la medición.
+                  Haz una consulta nueva desde la app y pulsa Actualizar.
+                </div>
+              )}
             </section>
           </>
         )}
 
-        {!summary && !loading && !error && (
-          <div className="empty">Todavía no hay información de consumo.</div>
+        {!summary && loading && (
+          <div className="empty">Cargando datos reales...</div>
         )}
       </section>
     </main>
   );
 }
 
-function Metric({ title, value, note }: { title: string; value: string; note: string }) {
+function Metric({
+  title,
+  value,
+  note,
+}: {
+  title: string;
+  value: string;
+  note: string;
+}) {
   return (
     <article className="metric">
       <span>{title}</span>
@@ -291,20 +380,32 @@ function Metric({ title, value, note }: { title: string; value: string; note: st
   );
 }
 
-function PriceBox({ multiplier, avg, label }: { multiplier: number; avg: number; label: string }) {
-  const perRequest = Number(avg || 0) * multiplier;
+function PriceBox({
+  multiplier,
+  avg,
+  label,
+}: {
+  multiplier: number;
+  avg: number;
+  label: string;
+}) {
+  const value = Number(avg || 0) * multiplier;
+
   return (
     <div className="priceBox">
       <span>{label}</span>
-      <strong>{money(perRequest)}</strong>
-      <small>precio mínimo IA por consulta</small>
+      <strong>{money(value)}</strong>
+      <small>referencia por consulta</small>
     </div>
   );
 }
 
 function money(value: number) {
   const n = Number(value || 0);
+
+  if (n === 0) return "$0.000000";
   if (n < 0.01) return `$${n.toFixed(6)}`;
+
   return `$${n.toFixed(4)}`;
 }
 
