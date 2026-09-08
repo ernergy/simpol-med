@@ -1,14 +1,17 @@
-# SIMPLE Update 03
+# SIMPLE Update 04 - Supabase email confirmation
 
-Main changes:
-- ENTER DEVELOPMENT MODE is always visible on the login screen so development is no longer blocked by email confirmation.
-- Credits are shown only inside the user's account/dashboard.
-- New account concept remains free; the dashboard owns the credit balance.
-- BUY CREDITS added inside the account.
-- Placeholder packages: 5 / 10 / 25 credits.
-- Upload Medical Book and study flow remain available.
-- Real payments are intentionally not connected yet.
-- Development mode displays 1 test credit only for UI testing; it does not alter Supabase balance.
+Before testing, in Supabase:
+Authentication -> URL Configuration -> Redirect URLs
+Add:
+simple://auth-confirm
 
-Upload/replace the files over Update 02, then Git Pull in Android Studio.
-Keep ui/theme unchanged.
+Keep email confirmation enabled.
+
+Upload these files over the current project, then in Android Studio:
+git pull
+Sync Gradle
+Build -> Assemble Project
+Run
+
+Test with a clean user:
+CREATE ACCOUNT -> open confirmation email -> tap link -> SIMPLE opens -> SIGN IN.

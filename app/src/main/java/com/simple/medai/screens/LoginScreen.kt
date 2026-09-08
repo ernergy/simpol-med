@@ -16,18 +16,23 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlinx.coroutines.launch
 
+private const val EMAIL_CONFIRM_REDIRECT = "simple://auth-confirm"
+
 @Composable
-fun LoginScreen(onLoginSuccess: () -> Unit) {
+fun LoginScreen(
+    onLoginSuccess: () -> Unit,
+    onDevelopmentAccess: () -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
-    var accountCreated by remember { mutableStateOf(false) }
+    var waitingForConfirmation by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     Surface(Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(28.dp),
+            Modifier.fillMaxSize().padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -35,8 +40,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
             Spacer(Modifier.height(8.dp))
             Text("Medical Study AI", fontSize = 20.sp)
             Text("Learn medicine. Simply.", fontSize = 14.sp)
-
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(34.dp))
 
             OutlinedTextField(
                 value = email,
@@ -47,7 +51,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(12.dp))
 
             OutlinedTextField(
                 value = password,
@@ -59,7 +63,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(20.dp))
 
             Button(
                 enabled = !loading,
@@ -79,7 +83,14 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                             }
                             onLoginSuccess()
                         } catch (e: Exception) {
-                            message = if (e.message.orEmpty().contains("invalid_credentials", true)) "Incorrect email or password." else "Unable to sign in. Please try again."
+                            val raw = e.message.orEmpty()
+                            message = when {
+                                raw.contains("email not confirmed", true) ->
+                                    "Confirm your email first, then sign in."
+                                raw.contains("invalid_credentials", true) ->
+                                    "Incorrect email or password."
+                                else -> "Unable to sign in. Please try again."
+                            }
                         } finally {
                             loading = false
                         }
@@ -89,27 +100,35 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 Text(if (loading) "PLEASE WAIT..." else "SIGN IN")
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(10.dp))
 
             OutlinedButton(
                 enabled = !loading,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
                     if (email.isBlank() || password.length < 6) {
-                        message = "Enter an email and a password of at least 6 characters."
+                        message = "Enter a valid email and a password of at least 6 characters."
                         return@OutlinedButton
                     }
                     scope.launch {
                         loading = true
                         message = ""
                         try {
-                            SupabaseManager.client.auth.signUpWith(Email) {
+                            SupabaseManager.client.auth.signUpWith(
+                                provider = Email,
+                                redirectUrl = EMAIL_CONFIRM_REDIRECT
+                            ) {
                                 this.email = email.trim()
                                 this.password = password
                             }
-                            message = "Account created. Check your email if confirmation is required."
+                            waitingForConfirmation = true
+                            message = "Account created. Check your email and tap the confirmation link."
                         } catch (e: Exception) {
-                            message = e.message ?: "Unable to create account."
+                            val raw = e.message.orEmpty()
+                            message = if (raw.contains("already", true))
+                                "This account already exists. Confirm the email or sign in."
+                            else
+                                "Unable to create account. Please try again."
                         } finally {
                             loading = false
                         }
@@ -119,24 +138,32 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 Text("CREATE ACCOUNT")
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(10.dp))
-            TextButton(onClick = onDevelopmentAccess) {
-                Text("ENTER DEVELOPMENT MODE")
+            if (waitingForConfirmation) {
+                Spacer(Modifier.height(14.dp))
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("CHECK YOUR EMAIL", fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(6.dp))
+                        Text("Tap the confirmation link. Android should return you to SIMPLE automatically.")
+                        Spacer(Modifier.height(8.dp))
+                        Text("Then sign in with the same email and password.", fontSize = 12.sp)
+                    }
+                }
             }
-            Text(
-                "Development only — removed before release.",
-                fontSize = 11.sp
-            )
 
             if (message.isNotBlank()) {
-                Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(14.dp))
                 Text(message, fontSize = 14.sp)
             }
 
-            Spacer(Modifier.height(26.dp))
-            Text("1 free study credit", fontWeight = FontWeight.Medium)
+            Spacer(Modifier.height(18.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(8.dp))
+
+            TextButton(onClick = onDevelopmentAccess) {
+                Text("ENTER DEVELOPMENT MODE")
+            }
+            Text("Temporary development access — removed before release.", fontSize = 11.sp)
         }
     }
 }
