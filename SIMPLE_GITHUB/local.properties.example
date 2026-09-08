@@ -1,0 +1,4 @@
+# Copy this file to local.properties on your development machine.
+# Do not commit local.properties.
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_YOUR_KEY
