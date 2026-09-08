@@ -1,0 +1,19 @@
+SIMPLE UPDATE 06.1 FIX
+
+This fixes the Kotlin onClick errors in:
+- HomeScreen.kt
+- UploadBookScreen.kt
+
+Upload these two files to GitHub replacing the current ones.
+
+Then Android Studio:
+git pull origin main
+
+If pull aborts due to local modifications:
+git restore app/src/main/java/com/simple/medai/screens/HomeScreen.kt
+git restore app/src/main/java/com/simple/medai/screens/UploadBookScreen.kt
+git pull origin main
+
+Then:
+Build -> Clean Project
+Build -> Assemble Project

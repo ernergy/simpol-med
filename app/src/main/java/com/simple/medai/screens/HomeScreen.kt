@@ -80,7 +80,10 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                     Spacer(Modifier.height(14.dp))
-                    SimplePrimaryButton("BUY CREDITS") { showBuyCredits = true }
+                    SimplePrimaryButton(
+                        text = "BUY CREDITS",
+                        onClick = { showBuyCredits = true }
+                    )
                 }
             }
 
@@ -104,7 +107,10 @@ fun HomeScreen(
                         fontSize = 13.sp
                     )
                     Spacer(Modifier.height(14.dp))
-                    SimplePrimaryButton("SELECT MEDICAL BOOK") { onUploadBook() }
+                    SimplePrimaryButton(
+                        text = "SELECT MEDICAL BOOK",
+                        onClick = onUploadBook
+                    )
                 }
             }
 
@@ -208,5 +214,7 @@ private fun CreditPackage(label: String) {
         enabled = false,
         modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         shape = SimpleButtonShape
-    ) { Text(label) }
+    ) {
+        Text(label)
+    }
 }
