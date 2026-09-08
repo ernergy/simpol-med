@@ -9,202 +9,193 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.simple.medai.data.SimpleAiRepository
 import com.simple.medai.data.SupabaseRepository
 import com.simple.medai.models.SelectedBook
+import kotlinx.coroutines.launch
+
+private data class ChatMessage(val fromUser: Boolean, val text: String)
 
 @Composable
-fun StudySessionScreen(
-    book: SelectedBook?,
-    onBack: () -> Unit
-) {
+fun StudySessionScreen(book: SelectedBook?, onBack: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
     var status by remember { mutableStateOf("Preparando espacio de trabajo...") }
     var prompt by remember { mutableStateOf("") }
-    var lastPrompt by remember { mutableStateOf<String?>(null) }
+    var sending by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+    val messages = remember { mutableStateListOf<ChatMessage>() }
 
     LaunchedEffect(book) {
-        if (book != null) {
-            status = try {
-                if (SupabaseRepository.createStudySession(book) != null)
-                    "Espacio de trabajo listo"
-                else
-                    "Sesión disponible"
-            } catch (_: Exception) {
-                "Espacio de trabajo disponible"
-            }
+        status = try {
+            if (book != null) SupabaseRepository.createStudySession(book)
+            "IA conectada"
+        } catch (_: Exception) {
+            "IA conectada"
         }
     }
 
-    Surface(
-        Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
+    LaunchedEffect(messages.size, sending) {
+        if (messages.isNotEmpty()) scrollState.animateScrollTo(scrollState.maxValue)
+    }
+
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .imePadding()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(22.dp)
         ) {
-            SimpleBackButton(
-                onClick = onBack,
-                label = "MIS LIBROS"
-            )
-
+            SimpleBackButton(onClick = onBack, label = "MIS LIBROS")
             Spacer(Modifier.height(16.dp))
 
             SimpleHeader(
                 title = "Chat con IA",
-                subtitle = book?.name ?: "Libro médico"
+                subtitle = book?.name ?: "Sin libro seleccionado"
             )
 
             Spacer(Modifier.height(10.dp))
+            AssistChip(onClick = {}, label = { Text(status) })
 
-            AssistChip(
-                onClick = {},
-                label = { Text(status) }
-            )
-
-            Spacer(Modifier.height(20.dp))
-
+            Spacer(Modifier.height(18.dp))
             SimpleSectionTitle(
-                "¿Qué quieres hacer con este libro?",
-                "Puedes escribir libremente o usar una de las opciones."
+                "¿Qué quieres hacer?",
+                "Escribe libremente o usa una opción para empezar."
             )
-
             Spacer(Modifier.height(12.dp))
 
-            AiAction(
-                "📄",
-                "Crear resumen editable",
-                "Genera un resumen que luego podrás editar y guardar."
-            )
-            AiAction(
-                "🧠",
-                "Explicarme un tema",
-                "Pide una explicación simple o avanzada."
-            )
-            AiAction(
-                "📊",
-                "Crear PowerPoint",
-                "Prepara una presentación a partir de un tema."
-            )
-            AiAction(
-                "↔",
-                "Comparar conceptos",
-                "Crea comparaciones claras y ordenadas."
-            )
-            AiAction(
-                "❓",
-                "Crear preguntas de repaso",
-                "Genera preguntas para estudiar."
-            )
+            AiAction("📄", "Crear resumen editable", "Genera una estructura para un resumen.") {
+                prompt = "Crea un resumen editable, claro y estructurado sobre: "
+            }
+            AiAction("🧠", "Explicarme un tema", "Pide una explicación simple o avanzada.") {
+                prompt = "Explícame de forma clara y didáctica: "
+            }
+            AiAction("📊", "Preparar PowerPoint", "Genera el contenido base para una presentación.") {
+                prompt = "Prepara el contenido de una presentación PowerPoint sobre: "
+            }
+            AiAction("↔", "Comparar conceptos", "Pide una comparación médica ordenada.") {
+                prompt = "Compara de manera clara y ordenada: "
+            }
+
+            if (messages.isNotEmpty()) {
+                Spacer(Modifier.height(18.dp))
+                SimpleSectionTitle("Conversación")
+                Spacer(Modifier.height(10.dp))
+
+                messages.forEach {
+                    ChatBubble(it)
+                    Spacer(Modifier.height(9.dp))
+                }
+
+                if (sending) {
+                    Card(Modifier.fillMaxWidth(), shape = SimpleCardShape) {
+                        Row(Modifier.padding(16.dp)) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            Text("SIMPLE está pensando...")
+                        }
+                    }
+                }
+            }
 
             Spacer(Modifier.height(18.dp))
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = SimpleCardShape
-            ) {
+            Card(Modifier.fillMaxWidth(), shape = SimpleCardShape) {
                 Column(Modifier.padding(16.dp)) {
-                    Text(
-                        "Escribe lo que necesitas",
-                        fontWeight = FontWeight.Bold
-                    )
-
+                    Text("Escribe lo que necesitas", fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(10.dp))
 
                     OutlinedTextField(
                         value = prompt,
-                        onValueChange = { prompt = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 110.dp),
+                        onValueChange = {
+                            prompt = it
+                            errorMessage = ""
+                        },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
+                        enabled = !sending,
                         placeholder = {
-                            Text(
-                                "Ejemplo: Explícame el capítulo 4 y haz un resumen con puntos clave."
-                            )
+                            Text("Ejemplo: Explícame la insuficiencia cardíaca y dame puntos clave.")
                         },
                         shape = SimpleButtonShape
                     )
 
+                    if (errorMessage.isNotBlank()) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            errorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 12.sp
+                        )
+                    }
+
                     Spacer(Modifier.height(10.dp))
 
                     SimplePrimaryButton(
-                        text = "ENVIAR A LA IA",
-                        enabled = prompt.isNotBlank(),
+                        text = if (sending) "CONSULTANDO..." else "ENVIAR A LA IA",
+                        enabled = prompt.isNotBlank() && !sending,
                         icon = "➤",
                         onClick = {
-                            lastPrompt = prompt.trim()
+                            val text = prompt.trim()
+                            if (text.isBlank()) return@SimplePrimaryButton
+
+                            messages.add(ChatMessage(true, text))
                             prompt = ""
+                            errorMessage = ""
+                            sending = true
+
+                            scope.launch {
+                                try {
+                                    val result = SimpleAiRepository.ask(text, book?.name)
+                                    messages.add(ChatMessage(false, result.answer))
+                                } catch (e: Exception) {
+                                    errorMessage = e.message ?: "No se pudo consultar la IA."
+                                } finally {
+                                    sending = false
+                                }
+                            }
                         }
                     )
                 }
             }
 
-            lastPrompt?.let {
-                Spacer(Modifier.height(14.dp))
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = SimpleCardShape,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text(
-                            "Tu solicitud",
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        Text(it)
-                        Spacer(Modifier.height(10.dp))
-                        Text(
-                            "La conexión real con la inteligencia artificial será el siguiente paso.",
-                            fontSize = 12.sp
-                        )
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.height(18.dp))
 
             SimpleInfoCard(
-                title = "Guardado inteligente",
-                body = "El libro original es temporal. Solo los resúmenes o materiales que decidas guardar permanecen en tu cuenta y estarán sujetos a un límite."
+                title = "Estado actual",
+                body = "La IA ya responde de verdad. En esta primera conexión recibe tu pregunta y el nombre del libro. El contenido completo del PDF se conectará en el siguiente paso."
             )
 
-            Spacer(Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = SimpleCardShape
-            ) {
-                Column(Modifier.padding(18.dp)) {
-                    Text("🎓", fontSize = 28.sp)
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        "Modo estudio y examen",
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(Modifier.height(5.dp))
-                    Text(
-                        "Se habilita desde un resumen guardado, no directamente desde el libro original.",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    SimpleOutlinedButton(
-                        text = "SELECCIONA UN RESUMEN GUARDADO",
-                        onClick = {},
-                        enabled = false
-                    )
-                }
-            }
-
             Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun ChatBubble(message: ChatMessage) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = SimpleCardShape,
+        colors = CardDefaults.cardColors(
+            containerColor = if (message.fromUser)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(
+                if (message.fromUser) "Tú" else "SIMPLE",
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp
+            )
+            Spacer(Modifier.height(5.dp))
+            Text(message.text)
         }
     }
 }
@@ -213,13 +204,12 @@ fun StudySessionScreen(
 private fun AiAction(
     icon: String,
     title: String,
-    subtitle: String
+    subtitle: String,
+    onClick: () -> Unit
 ) {
     OutlinedButton(
-        onClick = {},
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 10.dp),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
         shape = SimpleButtonShape,
         contentPadding = PaddingValues(16.dp)
     ) {

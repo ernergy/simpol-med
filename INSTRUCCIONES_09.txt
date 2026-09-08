@@ -1,0 +1,31 @@
+SIMPLE UPDATE 09 — CHAT REAL CON OPENAI
+
+La Edge Function simple-ai YA está desplegada en Supabase.
+Usa el secreto OPEN_AI_KEY.
+Modelo inicial: gpt-5.6-luna.
+
+Sube estos archivos a GitHub:
+- app/src/main/java/com/simple/medai/data/SimpleAiRepository.kt
+- app/src/main/java/com/simple/medai/screens/StudySessionScreen.kt
+- supabase/functions/simple-ai/index.ts
+
+Después:
+git pull origin main
+
+Luego:
+Build -> Clean Project
+Build -> Assemble Project
+Run
+
+Prueba:
+1. Inicia sesión.
+2. Selecciona un PDF.
+3. Abre Chat con IA.
+4. Escribe: Explícame de forma sencilla qué es la insuficiencia cardíaca.
+5. Pulsa ENVIAR A LA IA.
+
+IMPORTANTE:
+- Chat real OpenAI: SÍ.
+- Clave protegida en Supabase: SÍ.
+- PDF completo enviado al modelo: TODAVÍA NO.
+- Siguiente paso: envío temporal del PDF, resumen editable, guardado limitado y PowerPoint.
