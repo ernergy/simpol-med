@@ -1,12 +1,14 @@
 package com.simple.medai.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -17,29 +19,18 @@ val SimpleButtonShape = RoundedCornerShape(16.dp)
 @Composable
 fun SimpleHeader(
     title: String,
-    subtitle: String? = null,
-    trailing: (@Composable () -> Unit)? = null
+    subtitle: String? = null
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(Modifier.weight(1f)) {
+    Column {
+        Text(title, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        if (!subtitle.isNullOrBlank()) {
+            Spacer(Modifier.height(3.dp))
             Text(
-                text = title,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
+                subtitle,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 13.sp
             )
-            if (!subtitle.isNullOrBlank()) {
-                Spacer(Modifier.height(3.dp))
-                Text(
-                    text = subtitle,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp
-                )
-            }
         }
-        trailing?.invoke()
     }
 }
 
@@ -60,7 +51,8 @@ fun SimpleSectionTitle(title: String, subtitle: String? = null) {
 fun SimplePrimaryButton(
     text: String,
     onClick: () -> Unit,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    icon: ImageVector? = null
 ) {
     Button(
         onClick = onClick,
@@ -70,6 +62,10 @@ fun SimplePrimaryButton(
             .height(54.dp),
         shape = SimpleButtonShape
     ) {
+        if (icon != null) {
+            Icon(icon, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+        }
         Text(text, fontWeight = FontWeight.Bold)
     }
 }
@@ -78,7 +74,8 @@ fun SimplePrimaryButton(
 fun SimpleOutlinedButton(
     text: String,
     onClick: () -> Unit,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    icon: ImageVector? = null
 ) {
     OutlinedButton(
         onClick = onClick,
@@ -86,9 +83,12 @@ fun SimpleOutlinedButton(
         modifier = Modifier
             .fillMaxWidth()
             .height(54.dp),
-        shape = SimpleButtonShape,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        shape = SimpleButtonShape
     ) {
+        if (icon != null) {
+            Icon(icon, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+        }
         Text(text, fontWeight = FontWeight.SemiBold)
     }
 }
@@ -118,6 +118,50 @@ fun SimpleInfoCard(
             if (actionText != null && onAction != null) {
                 Spacer(Modifier.height(14.dp))
                 SimplePrimaryButton(actionText, onAction)
+            }
+        }
+    }
+}
+
+@Composable
+fun FeatureTile(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: (() -> Unit)? = null
+) {
+    Card(
+        onClick = { onClick?.invoke() },
+        enabled = onClick != null,
+        modifier = Modifier.fillMaxWidth(),
+        shape = SimpleCardShape
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    modifier = Modifier.padding(12.dp)
+                )
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    subtitle,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (onClick != null) {
+                Icon(Icons.Default.ChevronRight, contentDescription = null)
             }
         }
     }

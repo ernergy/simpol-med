@@ -2,6 +2,8 @@ package com.simple.medai.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,39 +38,32 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 shape = SimpleCardShape,
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                Text(
-                    "S",
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    fontSize = 34.sp,
-                    fontWeight = FontWeight.Black
+                Icon(
+                    Icons.Default.Lightbulb,
+                    contentDescription = "Logo SIMPLE",
+                    modifier = Modifier.padding(18.dp).size(42.dp)
                 )
             }
 
             Spacer(Modifier.height(18.dp))
             Text("SIMPLE", fontSize = 40.sp, fontWeight = FontWeight.Black)
             Text(
-                "Smart Learning for Medical People",
+                "Aprendizaje inteligente para medicina",
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            Spacer(Modifier.height(36.dp))
+            Spacer(Modifier.height(34.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = SimpleCardShape,
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                shape = SimpleCardShape
             ) {
                 Column(Modifier.padding(20.dp)) {
-                    Text(
-                        "Welcome",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("Bienvenido", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Sign in to continue studying.",
+                        "Ingresa para continuar estudiando.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp
                     )
@@ -78,7 +73,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it; message = "" },
-                        label = { Text("Email") },
+                        label = { Text("Correo electrónico") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         modifier = Modifier.fillMaxWidth(),
@@ -90,7 +85,7 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it; message = "" },
-                        label = { Text("Password") },
+                        label = { Text("Contraseña") },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -101,11 +96,11 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     Spacer(Modifier.height(18.dp))
 
                     SimplePrimaryButton(
-                        text = if (loading) "PLEASE WAIT..." else "SIGN IN",
+                        text = if (loading) "ESPERE..." else "INGRESAR",
                         enabled = !loading,
                         onClick = {
                             if (email.isBlank() || password.isBlank()) {
-                                message = "Enter your email and password."
+                                message = "Ingresa tu correo y contraseña."
                                 return@SimplePrimaryButton
                             }
                             scope.launch {
@@ -119,9 +114,9 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                                     onLoginSuccess()
                                 } catch (e: Exception) {
                                     message = if (e.message.orEmpty().contains("invalid_credentials", true))
-                                        "Incorrect email or password."
+                                        "Correo o contraseña incorrectos."
                                     else
-                                        "Unable to sign in. Please try again."
+                                        "No se pudo iniciar sesión."
                                 } finally {
                                     loading = false
                                 }
@@ -132,11 +127,11 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                     Spacer(Modifier.height(10.dp))
 
                     SimpleOutlinedButton(
-                        text = "CREATE ACCOUNT",
+                        text = "CREAR CUENTA",
                         enabled = !loading,
                         onClick = {
                             if (email.isBlank() || password.length < 6) {
-                                message = "Use a valid email and a password of at least 6 characters."
+                                message = "Usa un correo válido y una contraseña de al menos 6 caracteres."
                                 return@SimpleOutlinedButton
                             }
                             scope.launch {
@@ -150,13 +145,13 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                                     if (SupabaseManager.client.auth.currentSessionOrNull() != null) {
                                         onLoginSuccess()
                                     } else {
-                                        message = "Account created. Please sign in."
+                                        message = "Cuenta creada. Ahora ingresa."
                                     }
                                 } catch (e: Exception) {
                                     message = if (e.message.orEmpty().contains("already", true))
-                                        "This account already exists. Use SIGN IN."
+                                        "Esta cuenta ya existe. Usa INGRESAR."
                                     else
-                                        "Unable to create account. Please try again."
+                                        "No se pudo crear la cuenta."
                                 } finally {
                                     loading = false
                                 }

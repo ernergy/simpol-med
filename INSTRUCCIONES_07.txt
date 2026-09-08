@@ -1,0 +1,36 @@
+SIMPLE UPDATE 07 — ESPAÑOL + ICONOS + CHAT
+
+Cambios:
+- Toda la app visible pasa a español.
+- Logo SIMPLE ahora usa un foco en modo claro y oscuro.
+- Mis créditos muestra icono de monedas.
+- Mis libros muestra icono de libro.
+- Mis resúmenes muestra icono de documento.
+- Modo estudio muestra icono académico.
+- Chat con IA muestra icono de chat.
+- Mis resúmenes y Modo estudio se presentan como módulos claros; aún deshabilitados hasta tener resúmenes guardados.
+- Luego de seleccionar un PDF ya aparece ABRIR CHAT CON IA.
+- Dentro del chat se puede escribir libremente lo que el usuario necesita.
+- El botón ENVIAR A LA IA se habilita cuando hay texto.
+- La conexión real con el modelo de IA se implementará en la siguiente fase.
+- El libro sigue siendo temporal.
+- Resúmenes/materiales guardados serán persistentes con límite de almacenamiento.
+- Modo estudio/examen se habilitará desde resúmenes guardados.
+
+Sube los archivos reemplazando los existentes en GitHub.
+
+Luego en Android Studio:
+git pull origin main
+
+Si Git aborta por cambios locales:
+git restore app/src/main/java/com/simple/medai/screens/SimpleUi.kt
+git restore app/src/main/java/com/simple/medai/screens/LoginScreen.kt
+git restore app/src/main/java/com/simple/medai/screens/HomeScreen.kt
+git restore app/src/main/java/com/simple/medai/screens/UploadBookScreen.kt
+git restore app/src/main/java/com/simple/medai/screens/StudySessionScreen.kt
+git pull origin main
+
+Después:
+Build -> Clean Project
+Build -> Assemble Project
+Run

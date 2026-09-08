@@ -8,6 +8,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -35,7 +38,7 @@ fun UploadBookScreen(
                 book = info
                 message = ""
             } else {
-                message = "Unable to read this file."
+                message = "No se pudo leer este archivo."
             }
         }
     }
@@ -47,15 +50,12 @@ fun UploadBookScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(22.dp)
         ) {
-            TextButton(onClick = onBack) {
-                Text("← Back")
-            }
+            TextButton(onClick = onBack) { Text("← Volver") }
 
             Spacer(Modifier.height(8.dp))
-
             SimpleHeader(
-                title = "Library",
-                subtitle = "Select a medical book for a temporary AI study session."
+                title = "Mis libros",
+                subtitle = "Selecciona un libro médico para trabajar temporalmente con IA."
             )
 
             Spacer(Modifier.height(22.dp))
@@ -68,91 +68,60 @@ fun UploadBookScreen(
                 )
             ) {
                 Column(Modifier.padding(20.dp)) {
-                    Text(
-                        "Temporary book",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                    Icon(
+                        Icons.Default.MenuBook,
+                        contentDescription = null,
+                        modifier = Modifier.size(38.dp)
                     )
-
+                    Spacer(Modifier.height(10.dp))
+                    Text("Libro temporal", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                     Spacer(Modifier.height(6.dp))
-
                     Text(
-                        "The original PDF is used only while SIMPLE works with it. It is not kept as a permanent library file.",
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        "El PDF original se usa solo durante la sesión. No queda guardado permanentemente.",
+                        fontSize = 13.sp
                     )
-
                     Spacer(Modifier.height(14.dp))
-
                     SimplePrimaryButton(
-                        text = if (book == null) "SELECT PDF" else "CHANGE PDF",
-                        onClick = {
-                            picker.launch(arrayOf("application/pdf"))
-                        }
+                        text = if (book == null) "SELECCIONAR PDF" else "CAMBIAR PDF",
+                        onClick = { picker.launch(arrayOf("application/pdf")) },
+                        icon = Icons.Default.CloudUpload
                     )
                 }
             }
 
             book?.let {
                 Spacer(Modifier.height(18.dp))
-
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = SimpleCardShape
                 ) {
                     Column(Modifier.padding(18.dp)) {
-                        Text(
-                            it.name,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-
+                        Text(it.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         Spacer(Modifier.height(5.dp))
-
-                        Text(
-                            it.sizeLabel,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
+                        Text(it.sizeLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.height(10.dp))
-
-                        Text(
-                            "Ready to open the AI workspace.",
-                            fontSize = 13.sp
-                        )
+                        Text("Libro listo para abrir el chat con IA.")
                     }
                 }
 
                 Spacer(Modifier.height(18.dp))
 
                 SimplePrimaryButton(
-                    text = "OPEN AI WORKSPACE",
-                    onClick = {
-                        onContinue(it)
-                    }
+                    text = "ABRIR CHAT CON IA",
+                    onClick = { onContinue(it) }
                 )
             }
 
             if (message.isNotBlank()) {
                 Spacer(Modifier.height(14.dp))
-                Text(
-                    message,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text(message)
             }
-
-            Spacer(Modifier.height(22.dp))
-
-            SimpleInfoCard(
-                title = "What can you create?",
-                body = "Ask questions, request an editable summary, explain a topic, compare concepts, create a PowerPoint or prepare another study resource."
-            )
         }
     }
 }
 
 private fun readBookInfo(context: Context, uri: Uri): SelectedBook? {
-    var name = "Medical book.pdf"
+    var name = "Libro médico.pdf"
     var size = 0L
 
     context.contentResolver.query(
@@ -165,14 +134,8 @@ private fun readBookInfo(context: Context, uri: Uri): SelectedBook? {
         if (cursor.moveToFirst()) {
             val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-
-            if (nameIndex >= 0) {
-                name = cursor.getString(nameIndex) ?: name
-            }
-
-            if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) {
-                size = cursor.getLong(sizeIndex)
-            }
+            if (nameIndex >= 0) name = cursor.getString(nameIndex) ?: name
+            if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) size = cursor.getLong(sizeIndex)
         }
     }
 
