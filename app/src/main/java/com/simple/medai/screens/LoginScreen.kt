@@ -119,12 +119,16 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 Text("CREATE ACCOUNT")
             }
 
-            if (accountCreated) {
-                Spacer(modifier = Modifier.height(10.dp))
-                TextButton(onClick = onDevelopmentAccess) {
-                    Text("CONTINUE IN DEVELOPMENT MODE")
-                }
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(10.dp))
+            TextButton(onClick = onDevelopmentAccess) {
+                Text("ENTER DEVELOPMENT MODE")
             }
+            Text(
+                "Development only — removed before release.",
+                fontSize = 11.sp
+            )
 
             if (message.isNotBlank()) {
                 Spacer(Modifier.height(18.dp))
