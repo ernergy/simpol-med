@@ -14,9 +14,21 @@ import androidx.compose.ui.unit.sp
 import com.simple.medai.SupabaseManager
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 
 private const val EMAIL_CONFIRM_REDIRECT = "simple://auth-confirm"
+
+private fun safeError(e: Throwable): String {
+    val raw = e.message.orEmpty()
+        .replace(Regex("https?://\\S+"), "[url]")
+        .replace(Regex("sb_[A-Za-z0-9_\\-]+"), "[key]")
+        .take(350)
+
+    return if (raw.isBlank()) e::class.simpleName ?: "Unknown error"
+    else "${e::class.simpleName}: $raw"
+}
 
 @Composable
 fun LoginScreen(
@@ -28,11 +40,14 @@ fun LoginScreen(
     var message by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var waitingForConfirmation by remember { mutableStateOf(false) }
+
     val scope = rememberCoroutineScope()
 
     Surface(Modifier.fillMaxSize()) {
         Column(
-            Modifier.fillMaxSize().padding(28.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -40,7 +55,8 @@ fun LoginScreen(
             Spacer(Modifier.height(8.dp))
             Text("Medical Study AI", fontSize = 20.sp)
             Text("Learn medicine. Simply.", fontSize = 14.sp)
-            Spacer(Modifier.height(34.dp))
+
+            Spacer(Modifier.height(30.dp))
 
             OutlinedTextField(
                 value = email,
@@ -73,24 +89,26 @@ fun LoginScreen(
                         message = "Enter your email and password."
                         return@Button
                     }
+
                     scope.launch {
                         loading = true
-                        message = ""
+                        message = "Signing in..."
+
                         try {
-                            SupabaseManager.client.auth.signInWith(Email) {
-                                this.email = email.trim()
-                                this.password = password
+                            withTimeout(15000) {
+                                SupabaseManager.client.auth.signInWith(Email) {
+                                    this.email = email.trim()
+                                    this.password = password
+                                }
                             }
+
+                            message = "Sign in successful."
                             onLoginSuccess()
+
+                        } catch (_: TimeoutCancellationException) {
+                            message = "LOGIN TIMEOUT: Supabase did not answer within 15 seconds."
                         } catch (e: Exception) {
-                            val raw = e.message.orEmpty()
-                            message = when {
-                                raw.contains("email not confirmed", true) ->
-                                    "Confirm your email first, then sign in."
-                                raw.contains("invalid_credentials", true) ->
-                                    "Incorrect email or password."
-                                else -> "Unable to sign in. Please try again."
-                            }
+                            message = "LOGIN ERROR: ${safeError(e)}"
                         } finally {
                             loading = false
                         }
@@ -110,25 +128,29 @@ fun LoginScreen(
                         message = "Enter a valid email and a password of at least 6 characters."
                         return@OutlinedButton
                     }
+
                     scope.launch {
                         loading = true
-                        message = ""
+                        message = "Creating account..."
+
                         try {
-                            SupabaseManager.client.auth.signUpWith(
-                                provider = Email,
-                                redirectUrl = EMAIL_CONFIRM_REDIRECT
-                            ) {
-                                this.email = email.trim()
-                                this.password = password
+                            withTimeout(15000) {
+                                SupabaseManager.client.auth.signUpWith(
+                                    provider = Email,
+                                    redirectUrl = EMAIL_CONFIRM_REDIRECT
+                                ) {
+                                    this.email = email.trim()
+                                    this.password = password
+                                }
                             }
+
                             waitingForConfirmation = true
-                            message = "Account created. Check your email and tap the confirmation link."
+                            message = "SIGNUP OK: Account created. Check your email."
+
+                        } catch (_: TimeoutCancellationException) {
+                            message = "SIGNUP TIMEOUT: Supabase did not answer within 15 seconds."
                         } catch (e: Exception) {
-                            val raw = e.message.orEmpty()
-                            message = if (raw.contains("already", true))
-                                "This account already exists. Confirm the email or sign in."
-                            else
-                                "Unable to create account. Please try again."
+                            message = "SIGNUP ERROR: ${safeError(e)}"
                         } finally {
                             loading = false
                         }
@@ -139,31 +161,31 @@ fun LoginScreen(
             }
 
             if (waitingForConfirmation) {
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(12.dp))
                 Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp)) {
+                    Column(Modifier.padding(14.dp)) {
                         Text("CHECK YOUR EMAIL", fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(6.dp))
-                        Text("Tap the confirmation link. Android should return you to SIMPLE automatically.")
-                        Spacer(Modifier.height(8.dp))
-                        Text("Then sign in with the same email and password.", fontSize = 12.sp)
+                        Text("Tap the confirmation link and return to SIMPLE.")
                     }
                 }
             }
 
             if (message.isNotBlank()) {
                 Spacer(Modifier.height(14.dp))
-                Text(message, fontSize = 14.sp)
+                Card(Modifier.fillMaxWidth()) {
+                    Text(
+                        text = message,
+                        modifier = Modifier.padding(14.dp),
+                        fontSize = 13.sp
+                    )
+                }
             }
 
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(16.dp))
             HorizontalDivider()
-            Spacer(Modifier.height(8.dp))
-
             TextButton(onClick = onDevelopmentAccess) {
                 Text("ENTER DEVELOPMENT MODE")
             }
-            Text("Temporary development access — removed before release.", fontSize = 11.sp)
         }
     }
 }

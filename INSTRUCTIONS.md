@@ -1,17 +1,17 @@
-# SIMPLE Update 04 - Supabase email confirmation
+# SIMPLE Update 04.1 Diagnostic
 
-Before testing, in Supabase:
-Authentication -> URL Configuration -> Redirect URLs
-Add:
-simple://auth-confirm
+Replace only:
+app/src/main/java/com/simple/medai/screens/LoginScreen.kt
 
-Keep email confirmation enabled.
+This version:
+- adds a 15-second timeout to signup/login
+- always displays a diagnostic result
+- sanitizes URLs and API keys from error text
 
-Upload these files over the current project, then in Android Studio:
+After uploading to GitHub:
 git pull
-Sync Gradle
 Build -> Assemble Project
 Run
 
-Test with a clean user:
-CREATE ACCOUNT -> open confirmation email -> tap link -> SIMPLE opens -> SIGN IN.
+Then press CREATE ACCOUNT once and report the exact card message:
+SIGNUP OK / SIGNUP TIMEOUT / SIGNUP ERROR
