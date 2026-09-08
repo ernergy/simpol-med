@@ -1,0 +1,77 @@
+SIMPLE UPDATE 10 — WEB DE CONTROL DE COSTOS IA
+
+YA HECHO EN SUPABASE:
+- tabla public.ai_usage_logs creada
+- campo profiles.is_admin creado
+- Edge Function simple-ai actualizada a versión 2
+- simple-ai ahora registra:
+  input tokens
+  cached input tokens
+  output tokens
+  total tokens
+  costo estimado USD
+  tiempo de respuesta
+  usuario
+  libro
+- RPC get_ai_usage_summary() creada para el panel administrador
+
+TARIFA ACTUAL USADA:
+GPT-5.6 Luna
+Entrada: $0.20 / 1M tokens
+Entrada cacheada: $0.02 / 1M tokens
+Salida: $1.20 / 1M tokens
+
+PASO 1 — SUBIR A GITHUB
+Reemplaza/sube la carpeta web de este ZIP.
+
+PASO 2 — MARCAR TU USUARIO COMO ADMIN
+En Supabase:
+Table Editor -> profiles
+Busca tu usuario.
+En la columna is_admin cambia false a true.
+Solo las cuentas con is_admin=true pueden abrir el panel de costos.
+
+PASO 3 — CREAR web/.env.local EN TU COMPUTADORA
+NO SUBAS .env.local A GITHUB.
+
+Copia:
+web/.env.local.example
+como:
+web/.env.local
+
+Dentro pon:
+NEXT_PUBLIC_SUPABASE_URL=https://djxexpekmkdjjqahrmis.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=la_misma_publishable_key_que_usa_android
+
+La publishable key no es la clave secreta de OpenAI.
+NO pongas OPEN_AI_KEY aquí.
+
+PASO 4 — PROBAR WEB
+En la terminal:
+cd web
+npm install
+npm run dev
+
+Abre:
+http://localhost:3000
+
+Ingresa con el correo y contraseña de tu usuario SIMPLE que marcaste is_admin=true.
+
+PASO 5 — GENERAR DATOS
+Las consultas anteriores a esta actualización no tienen medición.
+Haz varias consultas nuevas desde Android.
+Luego pulsa ACTUALIZAR en la web.
+
+VERÁS:
+- costo acumulado
+- costo del día
+- costo últimos 7 días
+- número de solicitudes
+- costo promedio por solicitud
+- tokens entrada/salida
+- proyección de costo por 1.000 consultas
+- últimas consultas
+- tiempos de respuesta
+
+SIGUIENTE:
+Cuando tengamos 20-50 pruebas reales calcularemos cuánto debe costar cada crédito SIMPLE y cuántas acciones debe comprar cada paquete.

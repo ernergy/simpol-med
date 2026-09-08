@@ -1,13 +1,13 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "SIMPLE",
-  description: "Smart Learning for Medical People",
+  title: "SIMPLE Control",
+  description: "Panel de costos y uso de SIMPLE",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body>{children}</body>
     </html>
   );
