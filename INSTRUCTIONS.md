@@ -1,26 +1,32 @@
-# SIMPLE Update 04.2 - Logcat Auth Diagnostic
+# SIMPLE Update 05 — Clean Auth + Real Dashboard
 
-Replace only:
-app/src/main/java/com/simple/medai/screens/LoginScreen.kt
+Changes:
+- Removed Development Mode.
+- Removed email confirmation/deep-link code.
+- Removed simple://auth-confirm from AndroidManifest.
+- Auth is now only email + password.
+- Dashboard shows the real logged-in email.
+- Credits load from the real Supabase profile.
+- BUY CREDITS remains inside the user's account.
+- Study sessions now always belong to an authenticated user.
 
-After upload to GitHub:
-git pull
+Supabase must remain:
+mailer_autoconfirm = true
+external_email_enabled = true
+
+Upload these files over the current GitHub repository.
+
+Then in Android Studio:
+git pull origin main
+Build -> Clean Project
 Build -> Assemble Project
 Run
 
-In Android Studio Logcat use this search:
-SIMPLE_AUTH
-
-Then press CREATE ACCOUNT once.
-
-Expected sequence:
-LoginScreen opened
-CREATE ACCOUNT pressed
-SIGNUP request started
-SIGNUP redirect = simple://auth-confirm
-then one of:
-SIGNUP success
-SIGNUP timeout after 15 seconds
-SIGNUP error: ...
-
-Copy only the SIMPLE_AUTH lines.
+Test:
+1. Create account.
+2. Confirm immediate entry.
+3. Check email shown in dashboard.
+4. Check credits.
+5. Sign out.
+6. Sign back in.
+7. Upload a medical book and continue.

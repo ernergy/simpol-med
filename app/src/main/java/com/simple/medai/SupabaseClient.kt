@@ -9,10 +9,7 @@ object SupabaseManager {
         supabaseUrl = BuildConfig.SUPABASE_URL,
         supabaseKey = BuildConfig.SUPABASE_PUBLISHABLE_KEY
     ) {
-        install(Auth) {
-            scheme = "simple"
-            host = "auth-confirm"
-        }
+        install(Auth)
         install(Postgrest)
     }
 }

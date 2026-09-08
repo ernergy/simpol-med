@@ -13,19 +13,17 @@ import com.simple.medai.models.SelectedBook
 @Composable
 fun StudySessionScreen(
     book: SelectedBook?,
-    developmentMode: Boolean,
     onBack: () -> Unit
 ) {
-    var status by remember {
-        mutableStateOf(if (developmentMode) "Demo session ready" else "Creating session...")
-    }
+    var status by remember { mutableStateOf("Creating session...") }
 
-    LaunchedEffect(book, developmentMode) {
-        if (!developmentMode && book != null) {
+    LaunchedEffect(book) {
+        if (book != null) {
             status = try {
                 if (SupabaseRepository.createStudySession(book) != null)
-                    "Session registered in Supabase"
-                else "Session unavailable"
+                    "Session registered"
+                else
+                    "Session unavailable"
             } catch (_: Exception) {
                 "Could not register session"
             }
@@ -48,13 +46,7 @@ fun StudySessionScreen(
             StudyAction("EXAM MODE", "Practice questions, receive a score and repeat the exam.")
 
             Spacer(Modifier.weight(1f))
-            Text(
-                if (developmentMode)
-                    "Development mode does not write protected user data."
-                else
-                    "The session is registered. Temporary AI upload is the next step.",
-                fontSize = 12.sp
-            )
+            Text("Your study session is linked to your SIMPLE account.", fontSize = 12.sp)
         }
     }
 }

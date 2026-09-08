@@ -8,7 +8,6 @@ private enum class Screen { LOGIN, HOME, UPLOAD, STUDY }
 
 @Composable
 fun SimpleApp() {
-    var devMode by remember { mutableStateOf(false) }
     var screen by remember {
         mutableStateOf(if (SupabaseRepository.isLoggedIn()) Screen.HOME else Screen.LOGIN)
     }
@@ -16,13 +15,11 @@ fun SimpleApp() {
 
     when (screen) {
         Screen.LOGIN -> LoginScreen(
-            onLoginSuccess = { devMode = false; screen = Screen.HOME },
-            onDevelopmentAccess = { devMode = true; screen = Screen.HOME }
+            onLoginSuccess = { screen = Screen.HOME }
         )
         Screen.HOME -> HomeScreen(
-            developmentMode = devMode,
             onUploadBook = { screen = Screen.UPLOAD },
-            onLogout = { devMode = false; book = null; screen = Screen.LOGIN }
+            onLogout = { book = null; screen = Screen.LOGIN }
         )
         Screen.UPLOAD -> UploadBookScreen(
             onBack = { screen = Screen.HOME },
@@ -30,7 +27,6 @@ fun SimpleApp() {
         )
         Screen.STUDY -> StudySessionScreen(
             book = book,
-            developmentMode = devMode,
             onBack = { screen = Screen.UPLOAD }
         )
     }

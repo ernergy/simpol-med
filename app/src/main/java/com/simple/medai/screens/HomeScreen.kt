@@ -8,29 +8,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.simple.medai.SupabaseManager
 import com.simple.medai.data.SupabaseRepository
+import io.github.jan.supabase.auth.auth
 import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
-    developmentMode: Boolean,
     onUploadBook: () -> Unit,
     onLogout: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    var credits by remember { mutableStateOf<Int?>(if (developmentMode) 1 else null) }
-    var loading by remember { mutableStateOf(!developmentMode) }
+    val email = remember {
+        SupabaseManager.client.auth.currentUserOrNull()?.email ?: "My account"
+    }
+    var credits by remember { mutableStateOf<Int?>(null) }
+    var loading by remember { mutableStateOf(true) }
     var showBuyCredits by remember { mutableStateOf(false) }
 
-    LaunchedEffect(developmentMode) {
-        if (!developmentMode) {
-            try {
-                credits = SupabaseRepository.loadProfile()?.credits_balance
-            } catch (_: Exception) {
-                credits = null
-            } finally {
-                loading = false
-            }
+    LaunchedEffect(Unit) {
+        try {
+            credits = SupabaseRepository.loadProfile()?.credits_balance
+        } catch (_: Exception) {
+            credits = null
+        } finally {
+            loading = false
         }
     }
 
@@ -40,12 +42,9 @@ fun HomeScreen(
         ) {
             Spacer(Modifier.height(16.dp))
             Text("SIMPLE", fontSize = 32.sp, fontWeight = FontWeight.Bold)
-            Text("My study account")
-
-            if (developmentMode) {
-                Spacer(Modifier.height(10.dp))
-                AssistChip(onClick = {}, label = { Text("DEVELOPMENT MODE") })
-            }
+            Text("My study account", fontSize = 16.sp)
+            Spacer(Modifier.height(4.dp))
+            Text(email, fontSize = 13.sp)
 
             Spacer(Modifier.height(24.dp))
 
@@ -55,15 +54,14 @@ fun HomeScreen(
                     Spacer(Modifier.height(4.dp))
                     Text(
                         when {
-                            loading -> "Loading..."
-                            credits != null -> "$credits"
+                            loading -> "..."
+                            credits != null -> credits.toString()
                             else -> "—"
                         },
                         fontSize = 38.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text("available study credits")
-
                     Spacer(Modifier.height(14.dp))
                     Button(
                         onClick = { showBuyCredits = true },
@@ -75,7 +73,6 @@ fun HomeScreen(
             }
 
             Spacer(Modifier.height(24.dp))
-
             Text("Start studying", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(10.dp))
 
@@ -97,23 +94,22 @@ fun HomeScreen(
             }
 
             Spacer(Modifier.height(22.dp))
-
             Text("My activity", fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
-            Text("Your summaries, exams and study sessions will appear here.")
+            Text("Your summaries, exams and study sessions will appear here.", fontSize = 14.sp)
 
             Spacer(Modifier.weight(1f))
 
             TextButton(
                 onClick = {
                     scope.launch {
-                        if (!developmentMode) SupabaseRepository.signOut()
+                        SupabaseRepository.signOut()
                         onLogout()
                     }
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text(if (developmentMode) "Exit development mode" else "Sign out")
+                Text("SIGN OUT")
             }
         }
     }
@@ -131,7 +127,7 @@ fun HomeScreen(
                     CreditPackage("25 credits")
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        "Payments will be connected after we measure the real AI cost per study session.",
+                        "Payment will be connected after the AI cost per study session is finalized.",
                         fontSize = 12.sp
                     )
                 }

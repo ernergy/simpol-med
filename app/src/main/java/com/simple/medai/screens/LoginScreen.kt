@@ -1,6 +1,5 @@
 package com.simple.medai.screens
 
-import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -15,46 +14,19 @@ import androidx.compose.ui.unit.sp
 import com.simple.medai.SupabaseManager
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
-
-private const val EMAIL_CONFIRM_REDIRECT = "simple://auth-confirm"
-private const val TAG = "SIMPLE_AUTH"
-
-private fun safeError(e: Throwable): String {
-    val raw = e.message.orEmpty()
-        .replace(Regex("https?://\\S+"), "[url]")
-        .replace(Regex("sb_[A-Za-z0-9_\\-]+"), "[key]")
-        .take(500)
-
-    return if (raw.isBlank()) e::class.simpleName ?: "Unknown error"
-    else "${e::class.simpleName}: $raw"
-}
 
 @Composable
-fun LoginScreen(
-    onLoginSuccess: () -> Unit,
-    onDevelopmentAccess: () -> Unit
-) {
+fun LoginScreen(onLoginSuccess: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var message by remember { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
-    var waitingForConfirmation by remember { mutableStateOf(false) }
-
     val scope = rememberCoroutineScope()
-
-    LaunchedEffect(Unit) {
-        Log.d(TAG, "LoginScreen opened")
-        Log.d(TAG, "Current session exists = ${SupabaseManager.client.auth.currentSessionOrNull() != null}")
-    }
 
     Surface(Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(28.dp),
+            modifier = Modifier.fillMaxSize().padding(28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -62,23 +34,22 @@ fun LoginScreen(
             Spacer(Modifier.height(8.dp))
             Text("Medical Study AI", fontSize = 20.sp)
             Text("Learn medicine. Simply.", fontSize = 14.sp)
-
-            Spacer(Modifier.height(30.dp))
+            Spacer(Modifier.height(38.dp))
 
             OutlinedTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = { email = it; message = "" },
                 label = { Text("Email") },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(14.dp))
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { password = it; message = "" },
                 label = { Text("Password") },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
@@ -86,47 +57,32 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(24.dp))
 
             Button(
                 enabled = !loading,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
-                    Log.d(TAG, "SIGN IN pressed")
-
                     if (email.isBlank() || password.isBlank()) {
-                        Log.w(TAG, "SIGN IN blocked: missing email/password")
                         message = "Enter your email and password."
                         return@Button
                     }
-
                     scope.launch {
                         loading = true
-                        message = "Signing in..."
-                        Log.d(TAG, "SIGN IN request started for ${email.trim()}")
-
+                        message = ""
                         try {
-                            withTimeout(15000) {
-                                SupabaseManager.client.auth.signInWith(Email) {
-                                    this.email = email.trim()
-                                    this.password = password
-                                }
+                            SupabaseManager.client.auth.signInWith(Email) {
+                                this.email = email.trim()
+                                this.password = password
                             }
-
-                            Log.d(TAG, "SIGN IN success")
-                            message = "Sign in successful."
                             onLoginSuccess()
-
-                        } catch (_: TimeoutCancellationException) {
-                            Log.e(TAG, "SIGN IN timeout after 15 seconds")
-                            message = "LOGIN TIMEOUT: Supabase did not answer within 15 seconds."
                         } catch (e: Exception) {
-                            val err = safeError(e)
-                            Log.e(TAG, "SIGN IN error: $err", e)
-                            message = "LOGIN ERROR: $err"
+                            message = if (e.message.orEmpty().contains("invalid_credentials", true))
+                                "Incorrect email or password."
+                            else
+                                "Unable to sign in. Please try again."
                         } finally {
                             loading = false
-                            Log.d(TAG, "SIGN IN finished")
                         }
                     }
                 }
@@ -134,51 +90,36 @@ fun LoginScreen(
                 Text(if (loading) "PLEASE WAIT..." else "SIGN IN")
             }
 
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(12.dp))
 
             OutlinedButton(
                 enabled = !loading,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
-                    Log.d(TAG, "CREATE ACCOUNT pressed")
-
                     if (email.isBlank() || password.length < 6) {
-                        Log.w(TAG, "SIGNUP blocked: invalid email/password length")
                         message = "Enter a valid email and a password of at least 6 characters."
                         return@OutlinedButton
                     }
-
                     scope.launch {
                         loading = true
-                        message = "Creating account..."
-                        Log.d(TAG, "SIGNUP request started for ${email.trim()}")
-                        Log.d(TAG, "SIGNUP redirect = $EMAIL_CONFIRM_REDIRECT")
-
+                        message = ""
                         try {
-                            withTimeout(15000) {
-                                SupabaseManager.client.auth.signUpWith(
-                                    provider = Email,
-                                    redirectUrl = EMAIL_CONFIRM_REDIRECT
-                                ) {
-                                    this.email = email.trim()
-                                    this.password = password
-                                }
+                            SupabaseManager.client.auth.signUpWith(Email) {
+                                this.email = email.trim()
+                                this.password = password
                             }
-
-                            Log.d(TAG, "SIGNUP success")
-                            waitingForConfirmation = true
-                            message = "SIGNUP OK: Account created. Check your email."
-
-                        } catch (_: TimeoutCancellationException) {
-                            Log.e(TAG, "SIGNUP timeout after 15 seconds")
-                            message = "SIGNUP TIMEOUT: Supabase did not answer within 15 seconds."
+                            if (SupabaseManager.client.auth.currentSessionOrNull() != null) {
+                                onLoginSuccess()
+                            } else {
+                                message = "Account created. Please sign in."
+                            }
                         } catch (e: Exception) {
-                            val err = safeError(e)
-                            Log.e(TAG, "SIGNUP error: $err", e)
-                            message = "SIGNUP ERROR: $err"
+                            message = if (e.message.orEmpty().contains("already", true))
+                                "This account already exists. Use SIGN IN."
+                            else
+                                "Unable to create account. Please try again."
                         } finally {
                             loading = false
-                            Log.d(TAG, "SIGNUP finished")
                         }
                     }
                 }
@@ -186,31 +127,9 @@ fun LoginScreen(
                 Text("CREATE ACCOUNT")
             }
 
-            if (waitingForConfirmation) {
-                Spacer(Modifier.height(12.dp))
-                Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(14.dp)) {
-                        Text("CHECK YOUR EMAIL", fontWeight = FontWeight.Bold)
-                        Text("Tap the confirmation link and return to SIMPLE.")
-                    }
-                }
-            }
-
             if (message.isNotBlank()) {
-                Spacer(Modifier.height(14.dp))
-                Card(Modifier.fillMaxWidth()) {
-                    Text(
-                        text = message,
-                        modifier = Modifier.padding(14.dp),
-                        fontSize = 13.sp
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-            HorizontalDivider()
-            TextButton(onClick = onDevelopmentAccess) {
-                Text("ENTER DEVELOPMENT MODE")
+                Spacer(Modifier.height(18.dp))
+                Text(message, fontSize = 14.sp)
             }
         }
     }
