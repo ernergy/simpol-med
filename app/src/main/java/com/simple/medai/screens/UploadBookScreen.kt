@@ -6,6 +6,8 @@ import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -38,57 +40,83 @@ fun UploadBookScreen(
         }
     }
 
-    Surface(Modifier.fillMaxSize()) {
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(24.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(22.dp)
         ) {
             TextButton(onClick = onBack) { Text("← Back") }
 
-            Spacer(Modifier.height(12.dp))
-            Text("Upload medical book", fontSize = 28.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
-            Text("The original book will be used temporarily for your study session.")
+            SimpleHeader(
+                title = "Library",
+                subtitle = "Select a medical book for a temporary AI study session."
+            )
 
-            Spacer(Modifier.height(28.dp))
+            Spacer(Modifier.height(22.dp))
 
-            OutlinedButton(
-                onClick = { picker.launch(arrayOf("application/pdf")) },
-                modifier = Modifier.fillMaxWidth()
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = SimpleCardShape,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
             ) {
-                Text(if (book == null) "SELECT PDF" else "CHANGE PDF")
+                Column(Modifier.padding(20.dp)) {
+                    Text("Temporary book", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        "The original PDF is used only while SIMPLE works with it. It is not kept as a permanent library file.",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Spacer(Modifier.height(14.dp))
+                    SimplePrimaryButton(
+                        if (book == null) "SELECT PDF" else "CHANGE PDF"
+                    ) {
+                        picker.launch(arrayOf("application/pdf"))
+                    }
+                }
             }
 
             book?.let {
-                Spacer(Modifier.height(20.dp))
-                Card(Modifier.fillMaxWidth()) {
+                Spacer(Modifier.height(18.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = SimpleCardShape
+                ) {
                     Column(Modifier.padding(18.dp)) {
-                        Text(it.name, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(6.dp))
-                        Text(it.sizeLabel)
-                        Spacer(Modifier.height(8.dp))
-                        Text("PDF selected and ready for a study session.")
+                        Text(it.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Spacer(Modifier.height(5.dp))
+                        Text(
+                            it.sizeLabel,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Text(
+                            "Ready to open the AI workspace.",
+                            fontSize = 13.sp
+                        )
                     }
                 }
 
-                Spacer(Modifier.height(20.dp))
-
-                Button(
-                    onClick = { onContinue(it) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("CONTINUE")
+                Spacer(Modifier.height(18.dp))
+                SimplePrimaryButton("OPEN AI WORKSPACE") {
+                    onContinue(it)
                 }
             }
 
             if (message.isNotBlank()) {
-                Spacer(Modifier.height(16.dp))
-                Text(message)
+                Spacer(Modifier.height(14.dp))
+                Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
-            Spacer(Modifier.weight(1f))
-            Text(
-                "For now the app selects the PDF locally. AI upload and temporary processing will be connected in the next stage.",
-                fontSize = 12.sp
+            Spacer(Modifier.height(22.dp))
+            SimpleInfoCard(
+                title = "What can you create?",
+                body = "Ask questions, request an editable summary, explain a topic, compare concepts, create a PowerPoint or prepare another study resource."
             )
         }
     }
