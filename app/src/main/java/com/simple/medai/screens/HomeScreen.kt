@@ -22,7 +22,7 @@ fun HomeScreen(
 ) {
     val scope = rememberCoroutineScope()
     val email = remember {
-        SupabaseManager.client.auth.currentUserOrNull()?.email ?: "My account"
+        SupabaseManager.client.auth.currentUserOrNull()?.email ?: "Mi cuenta"
     }
     var credits by remember { mutableStateOf<Int?>(null) }
     var loading by remember { mutableStateOf(true) }
@@ -45,10 +45,23 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(22.dp)
         ) {
-            SimpleHeader(
-                title = "SIMPLE",
-                subtitle = email
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    shape = SimpleCardShape,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Text(
+                        "💡",
+                        fontSize = 28.sp,
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                SimpleHeader(
+                    title = "SIMPLE",
+                    subtitle = email
+                )
+            }
 
             Spacer(Modifier.height(22.dp))
 
@@ -59,89 +72,89 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
-                Column(Modifier.padding(20.dp)) {
-                    Text(
-                        "MY CREDITS",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        when {
-                            loading -> "..."
-                            credits != null -> credits.toString()
-                            else -> "—"
-                        },
-                        fontSize = 42.sp,
-                        fontWeight = FontWeight.Black
-                    )
-                    Text(
-                        "available study credits",
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    Spacer(Modifier.height(14.dp))
-                    SimplePrimaryButton(
-                        text = "BUY CREDITS",
-                        onClick = { showBuyCredits = true }
-                    )
+                Row(
+                    Modifier.padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("🪙", fontSize = 38.sp)
+                    Spacer(Modifier.width(16.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("MIS CRÉDITOS", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            when {
+                                loading -> "..."
+                                credits != null -> credits.toString()
+                                else -> "—"
+                            },
+                            fontSize = 40.sp,
+                            fontWeight = FontWeight.Black
+                        )
+                        Text("créditos disponibles")
+                    }
                 }
             }
 
-            Spacer(Modifier.height(22.dp))
-            SimpleSectionTitle(
-                "Start studying",
-                "Books are temporary. Your saved summaries are your study library."
+            Spacer(Modifier.height(10.dp))
+
+            SimplePrimaryButton(
+                text = "COMPRAR CRÉDITOS",
+                onClick = { showBuyCredits = true },
+                icon = "🛒"
             )
+
+            Spacer(Modifier.height(22.dp))
+
+            SimpleSectionTitle(
+                "Herramientas de estudio",
+                "Elige lo que quieres hacer."
+            )
+
             Spacer(Modifier.height(12.dp))
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = SimpleCardShape
-            ) {
-                Column(Modifier.padding(18.dp)) {
-                    Text("Medical book / PDF", fontWeight = FontWeight.Bold, fontSize = 17.sp)
-                    Spacer(Modifier.height(5.dp))
-                    Text(
-                        "Select a medical book, talk with SIMPLE AI and create useful study material.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 13.sp
-                    )
-                    Spacer(Modifier.height(14.dp))
-                    SimplePrimaryButton(
-                        text = "SELECT MEDICAL BOOK",
-                        onClick = onUploadBook
-                    )
-                }
-            }
+            FeatureTile(
+                icon = "📚",
+                title = "Mis libros",
+                subtitle = "Selecciona un PDF temporal para trabajar con IA.",
+                onClick = onUploadBook
+            )
 
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(10.dp))
 
-            Row(Modifier.fillMaxWidth()) {
-                DashboardMiniCard(
-                    modifier = Modifier.weight(1f),
-                    title = "My summaries",
-                    value = "Saved",
-                    subtitle = "Editable materials"
-                )
-                Spacer(Modifier.width(12.dp))
-                DashboardMiniCard(
-                    modifier = Modifier.weight(1f),
-                    title = "Study mode",
-                    value = "Ready",
-                    subtitle = "From saved summaries"
-                )
-            }
+            FeatureTile(
+                icon = "📄",
+                title = "Mis resúmenes",
+                subtitle = "Materiales guardados y editables.",
+                onClick = null
+            )
+
+            Spacer(Modifier.height(10.dp))
+
+            FeatureTile(
+                icon = "🎓",
+                title = "Modo estudio",
+                subtitle = "Repaso y examen desde un resumen guardado.",
+                onClick = null
+            )
+
+            Spacer(Modifier.height(10.dp))
+
+            FeatureTile(
+                icon = "💬",
+                title = "Chat con IA",
+                subtitle = "Selecciona un libro y escribe lo que necesitas.",
+                onClick = onUploadBook
+            )
 
             Spacer(Modifier.height(22.dp))
-            SimpleSectionTitle("My activity")
+            SimpleSectionTitle("Actividad reciente")
             Spacer(Modifier.height(10.dp))
 
             SimpleInfoCard(
-                title = "Your recent work will appear here",
-                body = "Summaries, study sessions, exams and generated presentations will be organized inside your account."
+                title = "Tu actividad aparecerá aquí",
+                body = "Resúmenes, sesiones de estudio, exámenes y presentaciones se organizarán dentro de tu cuenta."
             )
 
-            Spacer(Modifier.height(26.dp))
+            Spacer(Modifier.height(24.dp))
 
             TextButton(
                 onClick = {
@@ -152,58 +165,30 @@ fun HomeScreen(
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text("SIGN OUT")
+                Text("CERRAR SESIÓN")
             }
-
-            Spacer(Modifier.height(12.dp))
         }
     }
 
     if (showBuyCredits) {
         AlertDialog(
             onDismissRequest = { showBuyCredits = false },
-            title = { Text("Buy credits") },
+            title = { Text("Comprar créditos") },
             text = {
                 Column {
-                    Text("Choose a credit package.")
+                    Text("Elige un paquete.")
                     Spacer(Modifier.height(12.dp))
-                    CreditPackage("5 credits")
-                    CreditPackage("10 credits")
-                    CreditPackage("25 credits")
-                    Spacer(Modifier.height(10.dp))
-                    Text(
-                        "Payments will be connected after the final AI cost per study action is measured.",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    CreditPackage("5 créditos")
+                    CreditPackage("10 créditos")
+                    CreditPackage("25 créditos")
                 }
             },
             confirmButton = {
-                TextButton(onClick = { showBuyCredits = false }) { Text("CLOSE") }
+                TextButton(onClick = { showBuyCredits = false }) {
+                    Text("CERRAR")
+                }
             }
         )
-    }
-}
-
-@Composable
-private fun DashboardMiniCard(
-    modifier: Modifier,
-    title: String,
-    value: String,
-    subtitle: String
-) {
-    Card(modifier = modifier, shape = SimpleCardShape) {
-        Column(Modifier.padding(16.dp)) {
-            Text(title, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(6.dp))
-            Text(value, fontSize = 20.sp, fontWeight = FontWeight.Black)
-            Spacer(Modifier.height(2.dp))
-            Text(
-                subtitle,
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
     }
 }
 

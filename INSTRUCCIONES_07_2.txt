@@ -1,0 +1,20 @@
+SIMPLE UPDATE 07.2 — SIN DEPENDENCIA DE ICONOS
+
+Este arreglo elimina por completo androidx.compose.material.icons.
+Los iconos ahora son símbolos Unicode/emoji y no requieren ninguna librería adicional.
+
+Reemplaza en GitHub:
+- SimpleUi.kt
+- LoginScreen.kt
+- HomeScreen.kt
+- UploadBookScreen.kt
+- StudySessionScreen.kt
+
+Después:
+git pull origin main
+
+Luego:
+Build -> Clean Project
+Build -> Assemble Project
+
+No es necesario agregar material-icons-extended.

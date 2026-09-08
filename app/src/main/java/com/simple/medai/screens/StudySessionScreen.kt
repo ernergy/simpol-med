@@ -3,8 +3,6 @@ package com.simple.medai.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -43,29 +41,38 @@ fun StudySessionScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(22.dp)
         ) {
-            TextButton(onClick = onBack) { Text("← Mis libros") }
+            TextButton(onClick = onBack) {
+                Text("← Mis libros")
+            }
 
             Spacer(Modifier.height(6.dp))
+
             SimpleHeader(
                 title = "Chat con IA",
                 subtitle = book?.name ?: "Libro médico"
             )
 
             Spacer(Modifier.height(10.dp))
-            AssistChip(onClick = {}, label = { Text(status) })
+
+            AssistChip(
+                onClick = {},
+                label = { Text(status) }
+            )
 
             Spacer(Modifier.height(20.dp))
+
             SimpleSectionTitle(
                 "¿Qué quieres hacer con este libro?",
                 "Puedes escribir libremente o usar una de las opciones."
             )
+
             Spacer(Modifier.height(12.dp))
 
-            AiAction(Icons.Default.Description, "Crear resumen editable", "Genera un resumen que luego podrás editar y guardar.")
-            AiAction(Icons.Default.Psychology, "Explicarme un tema", "Pide una explicación simple o avanzada.")
-            AiAction(Icons.Default.Slideshow, "Crear PowerPoint", "Prepara una presentación a partir de un tema.")
-            AiAction(Icons.Default.CompareArrows, "Comparar conceptos", "Crea comparaciones claras y ordenadas.")
-            AiAction(Icons.Default.Quiz, "Crear preguntas de repaso", "Genera preguntas, pero el examen formal será desde un resumen guardado.")
+            AiAction("📄", "Crear resumen editable", "Genera un resumen que luego podrás editar y guardar.")
+            AiAction("🧠", "Explicarme un tema", "Pide una explicación simple o avanzada.")
+            AiAction("📊", "Crear PowerPoint", "Prepara una presentación a partir de un tema.")
+            AiAction("↔️", "Comparar conceptos", "Crea comparaciones claras y ordenadas.")
+            AiAction("❓", "Crear preguntas de repaso", "Genera preguntas para estudiar.")
 
             Spacer(Modifier.height(18.dp))
 
@@ -94,7 +101,7 @@ fun StudySessionScreen(
                     SimplePrimaryButton(
                         text = "ENVIAR A LA IA",
                         enabled = prompt.isNotBlank(),
-                        icon = Icons.Default.Send,
+                        icon = "➤",
                         onClick = {
                             lastPrompt = prompt.trim()
                             prompt = ""
@@ -105,6 +112,7 @@ fun StudySessionScreen(
 
             lastPrompt?.let {
                 Spacer(Modifier.height(14.dp))
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = SimpleCardShape,
@@ -118,7 +126,7 @@ fun StudySessionScreen(
                         Text(it)
                         Spacer(Modifier.height(10.dp))
                         Text(
-                            "La conexión con el modelo de IA se incorporará en el siguiente paso funcional.",
+                            "La conexión real con la inteligencia artificial será el siguiente paso.",
                             fontSize = 12.sp
                         )
                     }
@@ -129,7 +137,7 @@ fun StudySessionScreen(
 
             SimpleInfoCard(
                 title = "Guardado inteligente",
-                body = "El libro original es temporal. Solo los resúmenes o materiales que decidas guardar permanecen en tu cuenta y estarán sujetos a un límite de almacenamiento."
+                body = "El libro original es temporal. Solo los resúmenes o materiales que decidas guardar permanecen en tu cuenta y estarán sujetos a un límite."
             )
 
             Spacer(Modifier.height(16.dp))
@@ -139,7 +147,7 @@ fun StudySessionScreen(
                 shape = SimpleCardShape
             ) {
                 Column(Modifier.padding(18.dp)) {
-                    Icon(Icons.Default.School, contentDescription = null)
+                    Text("🎓", fontSize = 28.sp)
                     Spacer(Modifier.height(8.dp))
                     Text("Modo estudio y examen", fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(5.dp))
@@ -164,7 +172,7 @@ fun StudySessionScreen(
 
 @Composable
 private fun AiAction(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: String,
     title: String,
     subtitle: String
 ) {
@@ -176,7 +184,7 @@ private fun AiAction(
         shape = SimpleButtonShape,
         contentPadding = PaddingValues(16.dp)
     ) {
-        Icon(icon, contentDescription = null)
+        Text(icon, fontSize = 22.sp)
         Spacer(Modifier.width(10.dp))
         Column(Modifier.fillMaxWidth()) {
             Text(title, fontWeight = FontWeight.Bold)

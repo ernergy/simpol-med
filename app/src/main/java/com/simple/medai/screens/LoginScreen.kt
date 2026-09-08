@@ -2,8 +2,6 @@ package com.simple.medai.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,10 +36,10 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                 shape = SimpleCardShape,
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                Icon(
-                    Icons.Default.Lightbulb,
-                    contentDescription = "Logo SIMPLE",
-                    modifier = Modifier.padding(18.dp).size(42.dp)
+                Text(
+                    "💡",
+                    fontSize = 44.sp,
+                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp)
                 )
             }
 
@@ -113,10 +111,11 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                                     }
                                     onLoginSuccess()
                                 } catch (e: Exception) {
-                                    message = if (e.message.orEmpty().contains("invalid_credentials", true))
-                                        "Correo o contraseña incorrectos."
-                                    else
-                                        "No se pudo iniciar sesión."
+                                    message =
+                                        if (e.message.orEmpty().contains("invalid_credentials", true))
+                                            "Correo o contraseña incorrectos."
+                                        else
+                                            "No se pudo iniciar sesión."
                                 } finally {
                                     loading = false
                                 }
@@ -131,7 +130,8 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                         enabled = !loading,
                         onClick = {
                             if (email.isBlank() || password.length < 6) {
-                                message = "Usa un correo válido y una contraseña de al menos 6 caracteres."
+                                message =
+                                    "Usa un correo válido y una contraseña de al menos 6 caracteres."
                                 return@SimpleOutlinedButton
                             }
                             scope.launch {
@@ -148,10 +148,11 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
                                         message = "Cuenta creada. Ahora ingresa."
                                     }
                                 } catch (e: Exception) {
-                                    message = if (e.message.orEmpty().contains("already", true))
-                                        "Esta cuenta ya existe. Usa INGRESAR."
-                                    else
-                                        "No se pudo crear la cuenta."
+                                    message =
+                                        if (e.message.orEmpty().contains("already", true))
+                                            "Esta cuenta ya existe. Usa INGRESAR."
+                                        else
+                                            "No se pudo crear la cuenta."
                                 } finally {
                                     loading = false
                                 }

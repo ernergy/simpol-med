@@ -2,13 +2,10 @@ package com.simple.medai.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,7 +49,7 @@ fun SimplePrimaryButton(
     text: String,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    icon: ImageVector? = null
+    icon: String? = null
 ) {
     Button(
         onClick = onClick,
@@ -62,8 +59,8 @@ fun SimplePrimaryButton(
             .height(54.dp),
         shape = SimpleButtonShape
     ) {
-        if (icon != null) {
-            Icon(icon, contentDescription = null)
+        if (!icon.isNullOrBlank()) {
+            Text(icon, fontSize = 19.sp)
             Spacer(Modifier.width(8.dp))
         }
         Text(text, fontWeight = FontWeight.Bold)
@@ -75,7 +72,7 @@ fun SimpleOutlinedButton(
     text: String,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    icon: ImageVector? = null
+    icon: String? = null
 ) {
     OutlinedButton(
         onClick = onClick,
@@ -85,8 +82,8 @@ fun SimpleOutlinedButton(
             .height(54.dp),
         shape = SimpleButtonShape
     ) {
-        if (icon != null) {
-            Icon(icon, contentDescription = null)
+        if (!icon.isNullOrBlank()) {
+            Text(icon, fontSize = 19.sp)
             Spacer(Modifier.width(8.dp))
         }
         Text(text, fontWeight = FontWeight.SemiBold)
@@ -117,7 +114,10 @@ fun SimpleInfoCard(
             )
             if (actionText != null && onAction != null) {
                 Spacer(Modifier.height(14.dp))
-                SimplePrimaryButton(actionText, onAction)
+                SimplePrimaryButton(
+                    text = actionText,
+                    onClick = onAction
+                )
             }
         }
     }
@@ -125,7 +125,7 @@ fun SimpleInfoCard(
 
 @Composable
 fun FeatureTile(
-    icon: ImageVector,
+    icon: String,
     title: String,
     subtitle: String,
     onClick: (() -> Unit)? = null
@@ -144,9 +144,9 @@ fun FeatureTile(
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                Icon(
+                Text(
                     icon,
-                    contentDescription = null,
+                    fontSize = 28.sp,
                     modifier = Modifier.padding(12.dp)
                 )
             }
@@ -161,7 +161,7 @@ fun FeatureTile(
                 )
             }
             if (onClick != null) {
-                Icon(Icons.Default.ChevronRight, contentDescription = null)
+                Text("›", fontSize = 28.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
