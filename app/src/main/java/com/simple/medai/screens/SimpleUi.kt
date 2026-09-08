@@ -32,6 +32,33 @@ fun SimpleHeader(
 }
 
 @Composable
+fun SimpleBackButton(
+    onClick: () -> Unit,
+    label: String = "VOLVER"
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        modifier = Modifier.height(48.dp),
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    ) {
+        Text(
+            "←",
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Black
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            label,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
 fun SimpleSectionTitle(title: String, subtitle: String? = null) {
     Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold)
     if (!subtitle.isNullOrBlank()) {

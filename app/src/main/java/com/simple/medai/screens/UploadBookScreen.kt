@@ -35,18 +35,24 @@ fun UploadBookScreen(
         }
     }
 
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    Surface(
+        Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(22.dp)
         ) {
-            TextButton(onClick = onBack) {
-                Text("← Volver")
-            }
+            SimpleBackButton(
+                onClick = onBack,
+                label = "INICIO"
+            )
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
 
             SimpleHeader(
                 title = "Mis libros",
@@ -65,7 +71,11 @@ fun UploadBookScreen(
                 Column(Modifier.padding(20.dp)) {
                     Text("📚", fontSize = 38.sp)
                     Spacer(Modifier.height(10.dp))
-                    Text("Libro temporal", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(
+                        "Libro temporal",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
                     Spacer(Modifier.height(6.dp))
                     Text(
                         "El PDF original se usa solo durante la sesión. No queda guardado permanentemente.",
@@ -74,22 +84,32 @@ fun UploadBookScreen(
                     Spacer(Modifier.height(14.dp))
                     SimplePrimaryButton(
                         text = if (book == null) "SELECCIONAR PDF" else "CAMBIAR PDF",
-                        onClick = { picker.launch(arrayOf("application/pdf")) },
-                        icon = "⬆️"
+                        onClick = {
+                            picker.launch(arrayOf("application/pdf"))
+                        },
+                        icon = "⬆"
                     )
                 }
             }
 
             book?.let {
                 Spacer(Modifier.height(18.dp))
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = SimpleCardShape
                 ) {
                     Column(Modifier.padding(18.dp)) {
-                        Text(it.name, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(
+                            it.name,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
                         Spacer(Modifier.height(5.dp))
-                        Text(it.sizeLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            it.sizeLabel,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                         Spacer(Modifier.height(10.dp))
                         Text("Libro listo para abrir el chat con IA.")
                     }
@@ -108,6 +128,8 @@ fun UploadBookScreen(
                 Spacer(Modifier.height(14.dp))
                 Text(message)
             }
+
+            Spacer(Modifier.height(20.dp))
         }
     }
 }
@@ -126,8 +148,12 @@ private fun readBookInfo(context: Context, uri: Uri): SelectedBook {
         if (cursor.moveToFirst()) {
             val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
             val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-            if (nameIndex >= 0) name = cursor.getString(nameIndex) ?: name
-            if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) size = cursor.getLong(sizeIndex)
+            if (nameIndex >= 0) {
+                name = cursor.getString(nameIndex) ?: name
+            }
+            if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) {
+                size = cursor.getLong(sizeIndex)
+            }
         }
     }
 

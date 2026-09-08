@@ -1,0 +1,50 @@
+SIMPLE UPDATE 08 — NAVEGACION ANDROID + BOTON ATRAS + ICONO APP
+
+1. Navegación del sistema
+- El gesto ATRÁS de Android funciona dentro de SIMPLE.
+- El botón ATRÁS de Android también funciona para celulares con navegación de 3 botones.
+- CHAT -> Mis libros
+- Mis libros -> Inicio
+- En Inicio no se intercepta ATRÁS; Android mantiene su comportamiento normal.
+- Las pantallas respetan barra de navegación inferior, barra de estado y teclado.
+
+2. Botón ATRÁS visible
+- Se reemplazó el pequeño texto atrás por un botón tonal grande con flecha:
+  ← INICIO
+  ← MIS LIBROS
+
+3. Icono de la aplicación
+- Nuevo adaptive icon de SIMPLE con foco.
+- Fondo ámbar #E59F00
+- Foco cálido con base oscura.
+- Incluye icono monocromático para launchers compatibles.
+
+Sube/reemplaza todo el contenido de este ZIP en GitHub.
+
+Luego Android Studio:
+git pull origin main
+
+Si Git encuentra modificaciones locales, restaura únicamente los archivos de este update y vuelve a hacer pull.
+
+Después:
+Build -> Clean Project
+Build -> Assemble Project
+Run
+
+IMPORTANTE PARA VER EL ICONO:
+A veces Android conserva el icono anterior en caché.
+Si no cambia:
+1. Desinstala SIMPLE del celular.
+2. Ejecuta Run nuevamente desde Android Studio.
+
+WEB
+Si ya subiste la carpeta /web de Update 06, puedes verla localmente así:
+
+cd web
+npm install
+npm run dev
+
+Luego abre en la computadora:
+http://localhost:3000
+
+La siguiente etapa será conectar la web a Supabase y desplegarla para acceder desde iPhone/iPad y para el panel administrador.

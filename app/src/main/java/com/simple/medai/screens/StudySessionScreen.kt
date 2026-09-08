@@ -34,18 +34,25 @@ fun StudySessionScreen(
         }
     }
 
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+    Surface(
+        Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(22.dp)
         ) {
-            TextButton(onClick = onBack) {
-                Text("← Mis libros")
-            }
+            SimpleBackButton(
+                onClick = onBack,
+                label = "MIS LIBROS"
+            )
 
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(16.dp))
 
             SimpleHeader(
                 title = "Chat con IA",
@@ -68,11 +75,31 @@ fun StudySessionScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            AiAction("📄", "Crear resumen editable", "Genera un resumen que luego podrás editar y guardar.")
-            AiAction("🧠", "Explicarme un tema", "Pide una explicación simple o avanzada.")
-            AiAction("📊", "Crear PowerPoint", "Prepara una presentación a partir de un tema.")
-            AiAction("↔️", "Comparar conceptos", "Crea comparaciones claras y ordenadas.")
-            AiAction("❓", "Crear preguntas de repaso", "Genera preguntas para estudiar.")
+            AiAction(
+                "📄",
+                "Crear resumen editable",
+                "Genera un resumen que luego podrás editar y guardar."
+            )
+            AiAction(
+                "🧠",
+                "Explicarme un tema",
+                "Pide una explicación simple o avanzada."
+            )
+            AiAction(
+                "📊",
+                "Crear PowerPoint",
+                "Prepara una presentación a partir de un tema."
+            )
+            AiAction(
+                "↔",
+                "Comparar conceptos",
+                "Crea comparaciones claras y ordenadas."
+            )
+            AiAction(
+                "❓",
+                "Crear preguntas de repaso",
+                "Genera preguntas para estudiar."
+            )
 
             Spacer(Modifier.height(18.dp))
 
@@ -81,7 +108,11 @@ fun StudySessionScreen(
                 shape = SimpleCardShape
             ) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("Escribe lo que necesitas", fontWeight = FontWeight.Bold)
+                    Text(
+                        "Escribe lo que necesitas",
+                        fontWeight = FontWeight.Bold
+                    )
+
                     Spacer(Modifier.height(10.dp))
 
                     OutlinedTextField(
@@ -91,7 +122,9 @@ fun StudySessionScreen(
                             .fillMaxWidth()
                             .heightIn(min = 110.dp),
                         placeholder = {
-                            Text("Ejemplo: Explícame el capítulo 4 y haz un resumen con puntos clave.")
+                            Text(
+                                "Ejemplo: Explícame el capítulo 4 y haz un resumen con puntos clave."
+                            )
                         },
                         shape = SimpleButtonShape
                     )
@@ -121,7 +154,10 @@ fun StudySessionScreen(
                     )
                 ) {
                     Column(Modifier.padding(16.dp)) {
-                        Text("Tu solicitud", fontWeight = FontWeight.Bold)
+                        Text(
+                            "Tu solicitud",
+                            fontWeight = FontWeight.Bold
+                        )
                         Spacer(Modifier.height(6.dp))
                         Text(it)
                         Spacer(Modifier.height(10.dp))
@@ -149,7 +185,10 @@ fun StudySessionScreen(
                 Column(Modifier.padding(18.dp)) {
                     Text("🎓", fontSize = 28.sp)
                     Spacer(Modifier.height(8.dp))
-                    Text("Modo estudio y examen", fontWeight = FontWeight.Bold)
+                    Text(
+                        "Modo estudio y examen",
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(Modifier.height(5.dp))
                     Text(
                         "Se habilita desde un resumen guardado, no directamente desde el libro original.",
