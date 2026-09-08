@@ -1,5 +1,6 @@
 package com.simple.medai.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -19,12 +20,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
 private const val EMAIL_CONFIRM_REDIRECT = "simple://auth-confirm"
+private const val TAG = "SIMPLE_AUTH"
 
 private fun safeError(e: Throwable): String {
     val raw = e.message.orEmpty()
         .replace(Regex("https?://\\S+"), "[url]")
         .replace(Regex("sb_[A-Za-z0-9_\\-]+"), "[key]")
-        .take(350)
+        .take(500)
 
     return if (raw.isBlank()) e::class.simpleName ?: "Unknown error"
     else "${e::class.simpleName}: $raw"
@@ -42,6 +44,11 @@ fun LoginScreen(
     var waitingForConfirmation by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        Log.d(TAG, "LoginScreen opened")
+        Log.d(TAG, "Current session exists = ${SupabaseManager.client.auth.currentSessionOrNull() != null}")
+    }
 
     Surface(Modifier.fillMaxSize()) {
         Column(
@@ -85,7 +92,10 @@ fun LoginScreen(
                 enabled = !loading,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
+                    Log.d(TAG, "SIGN IN pressed")
+
                     if (email.isBlank() || password.isBlank()) {
+                        Log.w(TAG, "SIGN IN blocked: missing email/password")
                         message = "Enter your email and password."
                         return@Button
                     }
@@ -93,6 +103,7 @@ fun LoginScreen(
                     scope.launch {
                         loading = true
                         message = "Signing in..."
+                        Log.d(TAG, "SIGN IN request started for ${email.trim()}")
 
                         try {
                             withTimeout(15000) {
@@ -102,15 +113,20 @@ fun LoginScreen(
                                 }
                             }
 
+                            Log.d(TAG, "SIGN IN success")
                             message = "Sign in successful."
                             onLoginSuccess()
 
                         } catch (_: TimeoutCancellationException) {
+                            Log.e(TAG, "SIGN IN timeout after 15 seconds")
                             message = "LOGIN TIMEOUT: Supabase did not answer within 15 seconds."
                         } catch (e: Exception) {
-                            message = "LOGIN ERROR: ${safeError(e)}"
+                            val err = safeError(e)
+                            Log.e(TAG, "SIGN IN error: $err", e)
+                            message = "LOGIN ERROR: $err"
                         } finally {
                             loading = false
+                            Log.d(TAG, "SIGN IN finished")
                         }
                     }
                 }
@@ -124,7 +140,10 @@ fun LoginScreen(
                 enabled = !loading,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = {
+                    Log.d(TAG, "CREATE ACCOUNT pressed")
+
                     if (email.isBlank() || password.length < 6) {
+                        Log.w(TAG, "SIGNUP blocked: invalid email/password length")
                         message = "Enter a valid email and a password of at least 6 characters."
                         return@OutlinedButton
                     }
@@ -132,6 +151,8 @@ fun LoginScreen(
                     scope.launch {
                         loading = true
                         message = "Creating account..."
+                        Log.d(TAG, "SIGNUP request started for ${email.trim()}")
+                        Log.d(TAG, "SIGNUP redirect = $EMAIL_CONFIRM_REDIRECT")
 
                         try {
                             withTimeout(15000) {
@@ -144,15 +165,20 @@ fun LoginScreen(
                                 }
                             }
 
+                            Log.d(TAG, "SIGNUP success")
                             waitingForConfirmation = true
                             message = "SIGNUP OK: Account created. Check your email."
 
                         } catch (_: TimeoutCancellationException) {
+                            Log.e(TAG, "SIGNUP timeout after 15 seconds")
                             message = "SIGNUP TIMEOUT: Supabase did not answer within 15 seconds."
                         } catch (e: Exception) {
-                            message = "SIGNUP ERROR: ${safeError(e)}"
+                            val err = safeError(e)
+                            Log.e(TAG, "SIGNUP error: $err", e)
+                            message = "SIGNUP ERROR: $err"
                         } finally {
                             loading = false
+                            Log.d(TAG, "SIGNUP finished")
                         }
                     }
                 }
