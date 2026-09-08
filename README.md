@@ -1,2 +1,2 @@
-# sinpol-med
+# simpol-med
 aplicacion de ayuda de estudio 
