@@ -1,0 +1,11 @@
+CARPETA WEB SIMPLE LISTA PARA GITHUB
+
+1. En GitHub abre el repositorio ernergy/simpol-med.
+2. Sube la carpeta 'web' de este paquete reemplazando la carpeta web existente.
+3. NO MODIFIQUES ningún archivo antes de subirlo.
+4. Luego en Android Studio ejecuta:
+   git pull origin main
+
+IMPORTANTE:
+El archivo .env.local NO está incluido a propósito porque contiene configuración local.
+Después de subir y hacer git pull, te guiaré con un solo comando para crearlo sin editar carpetas manualmente.
