@@ -1,0 +1,33 @@
+SIMPLE UPDATE 14 — POWERPOINT DESCARGABLE EN EL CHAT
+
+BACKEND:
+simple-export v2 YA está desplegado en Supabase.
+Genera un archivo .pptx real y lo devuelve a Android.
+No queda almacenado permanentemente.
+
+SUBE A GITHUB:
+1. app/src/main/java/com/simple/medai/data/SimpleExportRepository.kt
+2. app/src/main/java/com/simple/medai/screens/StudySessionScreen.kt
+
+REQUIERE:
+Update 12 ya instalada (SimpleAiRepository con archivos grandes).
+
+FLUJO:
+1. Pulsa Diapositivas.
+2. Escribe el tema o adjunta un archivo.
+3. SIMPLE genera el contenido.
+4. Debajo de la respuesta aparece:
+   ⬇ DESCARGAR POWERPOINT
+5. Pulsa el botón.
+6. SIMPLE crea el .pptx real.
+7. Android abre su selector normal para guardar:
+   Descargas / Drive / OneDrive / otra carpeta.
+8. El archivo queda en el almacenamiento elegido por el usuario.
+
+No usa Supabase Storage permanente.
+
+Después:
+git pull origin main
+Build -> Clean Project
+Build -> Assemble Project
+Run

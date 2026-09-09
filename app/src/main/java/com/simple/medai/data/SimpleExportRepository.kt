@@ -21,7 +21,7 @@ data class GeneratedFile(
 object SimpleExportRepository {
     suspend fun createPowerPoint(
         content: String,
-        title: String = "Presentacion_SIMPLE"
+        title: String
     ): GeneratedFile = withContext(Dispatchers.IO) {
         val session = SupabaseManager.client.auth.currentSessionOrNull()
             ?: error("Tu sesión ha expirado.")
@@ -39,13 +39,13 @@ object SimpleExportRepository {
         }
 
         try {
-            val request = JSONObject().apply {
+            val body = JSONObject().apply {
                 put("type", "pptx")
                 put("content", content)
                 put("title", title)
             }
             conn.outputStream.use {
-                it.write(request.toString().toByteArray(Charsets.UTF_8))
+                it.write(body.toString().toByteArray(Charsets.UTF_8))
             }
 
             val status = conn.responseCode
@@ -54,7 +54,7 @@ object SimpleExportRepository {
             val json = if (text.isBlank()) JSONObject() else JSONObject(text)
 
             if (status !in 200..299) {
-                error(json.optString("error", "No se pudo generar el PowerPoint."))
+                error(json.optString("error", "No se pudo crear el PowerPoint."))
             }
 
             GeneratedFile(
@@ -67,7 +67,7 @@ object SimpleExportRepository {
         }
     }
 
-    fun saveToUri(context: Context, uri: Uri, file: GeneratedFile) {
+    fun save(context: Context, uri: Uri, file: GeneratedFile) {
         context.contentResolver.openOutputStream(uri)?.use {
             it.write(file.bytes)
         } ?: error("No se pudo guardar el archivo.")

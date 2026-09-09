@@ -15,14 +15,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.simple.medai.data.AiAttachment
-import com.simple.medai.data.SimpleAiRepository
+import com.simple.medai.data.*
 import kotlinx.coroutines.launch
 
 private data class ChatMessage(
     val fromUser: Boolean,
     val text: String,
-    val attachmentName: String? = null
+    val attachmentName: String? = null,
+    val canExportPptx: Boolean = false
 )
 
 @Composable
@@ -37,6 +37,8 @@ fun StudySessionScreen(onBack: () -> Unit) {
     var sending by remember { mutableStateOf(false) }
     var progress by remember { mutableStateOf<Int?>(null) }
     var errorText by remember { mutableStateOf("") }
+    var exportIndex by remember { mutableStateOf<Int?>(null) }
+    var pendingFile by remember { mutableStateOf<GeneratedFile?>(null) }
     val messages = remember { mutableStateListOf<ChatMessage>() }
 
     val picker = rememberLauncherForActivityResult(
@@ -48,6 +50,24 @@ fun StudySessionScreen(onBack: () -> Unit) {
                 errorText = ""
             } catch (e: Exception) {
                 errorText = e.message ?: "No se pudo adjuntar."
+            }
+        }
+    }
+
+    val saveLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        )
+    ) { uri ->
+        val file = pendingFile
+        if (uri != null && file != null) {
+            try {
+                SimpleExportRepository.save(context, uri, file)
+                errorText = ""
+            } catch (e: Exception) {
+                errorText = e.message ?: "No se pudo guardar."
+            } finally {
+                pendingFile = null
             }
         }
     }
@@ -77,8 +97,31 @@ fun StudySessionScreen(onBack: () -> Unit) {
 
             if (messages.isNotEmpty()) {
                 Spacer(Modifier.height(16.dp))
-                messages.forEach {
-                    ChatBubble(it)
+                messages.forEachIndexed { index, message ->
+                    ChatBubble(
+                        message = message,
+                        exporting = exportIndex == index,
+                        onDownload = if (message.canExportPptx) {
+                            {
+                                scope.launch {
+                                    exportIndex = index
+                                    errorText = ""
+                                    try {
+                                        val file = SimpleExportRepository.createPowerPoint(
+                                            content = message.text,
+                                            title = titleFromContent(message.text)
+                                        )
+                                        pendingFile = file
+                                        saveLauncher.launch(file.fileName)
+                                    } catch (e: Exception) {
+                                        errorText = e.message ?: "No se pudo crear el PowerPoint."
+                                    } finally {
+                                        exportIndex = null
+                                    }
+                                }
+                            }
+                        } else null
+                    )
                     Spacer(Modifier.height(8.dp))
                 }
             }
@@ -123,9 +166,7 @@ fun StudySessionScreen(onBack: () -> Unit) {
                                     Text(f.name, fontWeight = FontWeight.Bold, maxLines = 1)
                                     Text(formatBytes(f.sizeBytes), fontSize = 11.sp)
                                 }
-                                TextButton(onClick = { attachment = null }) {
-                                    Text("QUITAR")
-                                }
+                                TextButton(onClick = { attachment = null }) { Text("QUITAR") }
                             }
                         }
                         Spacer(Modifier.height(10.dp))
@@ -168,6 +209,7 @@ fun StudySessionScreen(onBack: () -> Unit) {
                                 val request = if (typed.isBlank())
                                     "Analiza este archivo y dime lo más importante."
                                 else typed
+                                val requestedAction = action
 
                                 messages += ChatMessage(true, request, file?.name)
                                 prompt = ""
@@ -181,11 +223,15 @@ fun StudySessionScreen(onBack: () -> Unit) {
                                         val result = SimpleAiRepository.ask(
                                             context = context,
                                             prompt = request,
-                                            action = action,
+                                            action = requestedAction,
                                             attachment = file,
                                             onUploadProgress = { progress = it }
                                         )
-                                        messages += ChatMessage(false, result.answer)
+                                        messages += ChatMessage(
+                                            fromUser = false,
+                                            text = result.answer,
+                                            canExportPptx = requestedAction == "diapositivas"
+                                        )
                                     } catch (e: Exception) {
                                         errorText = e.message ?: "No se pudo procesar."
                                     } finally {
@@ -202,16 +248,52 @@ fun StudySessionScreen(onBack: () -> Unit) {
                             Text("ENVIAR ➤", fontWeight = FontWeight.Bold)
                         }
                     }
-
-                    Spacer(Modifier.height(7.dp))
-                    Text(
-                        "Los archivos se leen desde tu celular, se procesan temporalmente y no se guardan como biblioteca.",
-                        fontSize = 10.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
             }
             Spacer(Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun ChatBubble(
+    message: ChatMessage,
+    exporting: Boolean,
+    onDownload: (() -> Unit)?
+) {
+    Card(
+        Modifier.fillMaxWidth(),
+        shape = SimpleCardShape,
+        colors = CardDefaults.cardColors(
+            containerColor = if (message.fromUser)
+                MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(Modifier.padding(15.dp)) {
+            Text(
+                if (message.fromUser) "Tú" else "SIMPLE",
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp
+            )
+            message.attachmentName?.let {
+                Spacer(Modifier.height(4.dp))
+                Text("📎 $it", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            }
+            Spacer(Modifier.height(5.dp))
+            Text(message.text)
+
+            if (onDownload != null) {
+                Spacer(Modifier.height(14.dp))
+                Button(
+                    onClick = onDownload,
+                    enabled = !exporting,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = SimpleButtonShape
+                ) {
+                    Text(if (exporting) "CREANDO POWERPOINT…" else "⬇ DESCARGAR POWERPOINT")
+                }
+            }
         }
     }
 }
@@ -224,7 +306,10 @@ private fun QuickActions(onAction: (String, String) -> Unit) {
         }
         Spacer(Modifier.width(7.dp))
         QuickButton(Modifier.weight(1f), "📊 Diapositivas") {
-            onAction("diapositivas", "Prepara una presentación profesional sobre: ")
+            onAction(
+                "diapositivas",
+                "Crea una presentación profesional. Escribe cada sección como 'Diapositiva 1: Título', seguida de viñetas. Tema: "
+            )
         }
     }
     Spacer(Modifier.height(7.dp))
@@ -246,29 +331,8 @@ private fun QuickButton(modifier: Modifier, label: String, onClick: () -> Unit) 
         modifier = modifier.height(46.dp),
         shape = SimpleButtonShape,
         contentPadding = PaddingValues(horizontal = 6.dp)
-    ) { Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
-}
-
-@Composable
-private fun ChatBubble(m: ChatMessage) {
-    Card(
-        Modifier.fillMaxWidth(),
-        shape = SimpleCardShape,
-        colors = CardDefaults.cardColors(
-            containerColor = if (m.fromUser)
-                MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surface
-        )
     ) {
-        Column(Modifier.padding(15.dp)) {
-            Text(if (m.fromUser) "Tú" else "SIMPLE", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-            m.attachmentName?.let {
-                Spacer(Modifier.height(4.dp))
-                Text("📎 $it", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-            }
-            Spacer(Modifier.height(5.dp))
-            Text(m.text)
-        }
+        Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -288,10 +352,10 @@ private fun readAttachment(context: Context, uri: Uri): AiAttachment {
         }
     }
     return AiAttachment(
-        uri = uri.toString(),
-        name = name,
-        mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream",
-        sizeBytes = size
+        uri.toString(),
+        name,
+        context.contentResolver.getType(uri) ?: "application/octet-stream",
+        size
     )
 }
 
@@ -299,4 +363,15 @@ private fun formatBytes(b: Long): String {
     if (b < 0) return "tamaño desconocido"
     val mb = b / 1024.0 / 1024.0
     return if (mb < 1) "%.1f KB".format(b / 1024.0) else "%.1f MB".format(mb)
+}
+
+private fun titleFromContent(text: String): String {
+    val first = text.lineSequence()
+        .map { it.trim() }
+        .firstOrNull { it.isNotBlank() }
+        ?: "Presentacion SIMPLE"
+    return first
+        .replace(Regex("^(#+\\s*)?(Diapositiva|Slide)\\s*\\d+\\s*[:.-]?\\s*", RegexOption.IGNORE_CASE), "")
+        .take(60)
+        .ifBlank { "Presentacion SIMPLE" }
 }
