@@ -1,0 +1,25 @@
+SIMPLE UPDATE 13 — POWERPOINT REAL
+
+BACKEND YA DESPLEGADO:
+simple-export v1
+
+Esta función convierte el contenido de diapositivas generado por SIMPLE
+en un archivo .pptx real.
+
+PARA INTEGRAR EN ANDROID:
+Sube:
+app/src/main/java/com/simple/medai/data/SimpleExportRepository.kt
+
+IMPORTANTE:
+Este archivo es el motor de exportación. La pantalla de chat debe usarlo
+cuando la acción sea "diapositivas", mostrando luego:
+- CREAR POWERPOINT
+- GUARDAR EN EL CELULAR
+
+El archivo se guarda mediante el selector de Android en la ubicación que
+el usuario elija; no se almacena permanentemente en Supabase.
+
+Backend:
+- simple-export genera Office Open XML (.pptx)
+- no usa almacenamiento permanente
+- devuelve el archivo a la app
