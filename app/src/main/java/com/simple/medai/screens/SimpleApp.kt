@@ -1,6 +1,5 @@
 package com.simple.medai.screens
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.*
 import com.simple.medai.data.SupabaseRepository
 
@@ -12,10 +11,6 @@ fun SimpleApp() {
         mutableStateOf(
             if (SupabaseRepository.isLoggedIn()) Screen.HOME else Screen.LOGIN
         )
-    }
-
-    BackHandler(enabled = screen == Screen.CHAT) {
-        screen = Screen.HOME
     }
 
     when (screen) {

@@ -1,0 +1,41 @@
+SIMPLE UPDATE 16 — MEMORIA DE CHAT CON ARCHIVOS
+
+CORRECCIÓN DEL ERROR:
+"Files file_xxx were not found"
+
+CAUSA:
+La versión anterior eliminaba el archivo de OpenAI inmediatamente después
+de responder la primera pregunta. Luego previous_response_id intentaba
+continuar una conversación que todavía hacía referencia a ese archivo ya
+eliminado.
+
+BACKEND:
+simple-ai v7 YA desplegado.
+
+NUEVO COMPORTAMIENTO:
+- El archivo permanece temporalmente disponible mientras el chat sigue abierto.
+- Las siguientes preguntas pueden continuar usando previous_response_id.
+- Al salir del chat, Android llama a cleanupFiles() y SIMPLE elimina los archivos
+  temporales de OpenAI.
+- Al abrir Nuevo chat, la memoria empieza de cero.
+- Sigue sin existir una biblioteca permanente de archivos.
+
+SUBE A GITHUB:
+1. app/src/main/java/com/simple/medai/data/SimpleAiRepository.kt
+2. app/src/main/java/com/simple/medai/screens/StudySessionScreen.kt
+3. app/src/main/java/com/simple/medai/screens/SimpleApp.kt
+
+DESPUÉS:
+git pull origin main
+Build -> Clean Project
+Build -> Assemble Project
+Run
+
+PRUEBA:
+1. Adjunta un PDF.
+2. "Resume este documento."
+3. Sin volver a adjuntar: "¿Cuál es el punto más importante del capítulo 2?"
+4. "Explícamelo de manera más sencilla."
+5. "Ahora haz 5 diapositivas de lo que hablamos."
+6. Sal del chat.
+7. Abre Nuevo chat: debe comenzar sin recordar lo anterior.
