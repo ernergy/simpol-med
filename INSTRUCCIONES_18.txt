@@ -1,0 +1,47 @@
+SIMPLE UPDATE 18 — ARCHIVOS MAYORES A 50 MB
+
+CAUSA REAL DEL ERROR:
+OpenAI Files puede almacenar archivos mucho mayores, pero el flujo directo
+input_file que estábamos usando rechaza este PDF al superar 50 MB.
+Por eso SIMPLE podía subirlo pero fallaba al entregárselo directamente al modelo.
+
+BACKEND YA ACTUALIZADO:
+- simple-index v1
+- simple-ai v10
+
+NUEVA ARQUITECTURA:
+Archivo hasta 45 MB:
+celular -> OpenAI file -> input_file directo
+
+Archivo mayor a 45 MB:
+celular -> Uploads por bloques -> archivo temporal OpenAI
+       -> Vector Store temporal -> file_search
+       -> SIMPLE analiza el documento
+
+El índice se prepara de forma asíncrona desde Android. Esto evita mantener una
+Edge Function esperando varios minutos.
+
+Al salir del chat:
+- se elimina el vector store temporal
+- se eliminan los archivos temporales
+
+SUBE A GITHUB:
+1) app/src/main/java/com/simple/medai/data/SimpleAiRepository.kt
+2) app/src/main/java/com/simple/medai/screens/StudySessionScreen.kt
+
+DESPUÉS:
+git pull origin main
+Build -> Clean Project
+Build -> Assemble Project
+Run
+
+PRUEBA:
+Adjunta nuevamente el PDF que produjo:
+"File urls cannot be larger than 50MB"
+
+Ahora debe mostrar aproximadamente:
+Subiendo archivo...
+Preparando archivo grande...
+Archivo listo. Analizando contenido...
+
+y luego responder al documento.
