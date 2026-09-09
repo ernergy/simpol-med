@@ -1,0 +1,52 @@
+SIMPLE UPDATE 11 — CHAT ÚNICO + ADJUNTOS REALES
+
+BACKEND:
+La Edge Function simple-ai ya fue actualizada a versión 3 en Supabase.
+
+CAMBIOS:
+- Se elimina el flujo obligatorio "Mis libros".
+- Ya no hay duplicación entre "Mis libros" y "Chat con IA".
+- Inicio tiene un solo botón principal: NUEVO CHAT.
+- Dentro del chat:
+  + Adjuntar cualquier archivo desde el selector de Android.
+  + Escribir libremente.
+  + Enviar texto solo o texto + archivo.
+  + La IA recibe realmente el archivo.
+  + Imágenes se envían como input_image.
+  + Otros archivos se envían como input_file.
+- Acciones rápidas:
+  Resumir
+  Diapositivas
+  Tarea
+  Explicar
+- El archivo es temporal y no se guarda como biblioteca.
+- Límite inicial: 10 MB por consulta para proteger memoria del teléfono.
+- El panel admin sigue registrando tokens y costos, incluyendo el nombre del adjunto.
+
+ARCHIVOS A SUBIR A GITHUB:
+app/src/main/java/com/simple/medai/data/SimpleAiRepository.kt
+app/src/main/java/com/simple/medai/screens/SimpleApp.kt
+app/src/main/java/com/simple/medai/screens/HomeScreen.kt
+app/src/main/java/com/simple/medai/screens/StudySessionScreen.kt
+
+El archivo UploadBookScreen.kt puede quedar en el proyecto sin usarse. Ya no forma parte del flujo.
+
+DESPUÉS:
+git pull origin main
+
+Build -> Clean Project
+Build -> Assemble Project
+Run
+
+PRUEBA RECOMENDADA:
+1. Nuevo chat.
+2. Pulsa + ADJUNTAR.
+3. Elige un PDF pequeño.
+4. Escribe: "Dime cuál es el tema principal de este documento y dame 5 puntos clave."
+5. Enviar.
+
+Luego prueba una imagen y una consulta sin archivo.
+
+NOTA:
+Esta versión devuelve las diapositivas y tareas como contenido estructurado dentro del chat.
+La generación de un archivo .pptx real será la siguiente mejora; la interfaz ya quedó preparada para trabajar desde el mismo chat.

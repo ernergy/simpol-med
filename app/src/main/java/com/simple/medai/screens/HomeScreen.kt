@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
-    onUploadBook: () -> Unit,
+    onStartChat: () -> Unit,
     onLogout: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -42,6 +42,8 @@ fun HomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(22.dp)
         ) {
@@ -50,11 +52,7 @@ fun HomeScreen(
                     shape = SimpleCardShape,
                     color = MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    Text(
-                        "💡",
-                        fontSize = 28.sp,
-                        modifier = Modifier.padding(12.dp)
-                    )
+                    Text("💡", fontSize = 28.sp, modifier = Modifier.padding(12.dp))
                 }
                 Spacer(Modifier.width(12.dp))
                 SimpleHeader(
@@ -105,25 +103,61 @@ fun HomeScreen(
             Spacer(Modifier.height(22.dp))
 
             SimpleSectionTitle(
-                "Herramientas de estudio",
-                "Elige lo que quieres hacer."
+                "¿Qué quieres hacer?",
+                "Ahora todo empieza desde un solo chat."
             )
 
             Spacer(Modifier.height(12.dp))
 
-            FeatureTile(
-                icon = "📚",
-                title = "Mis libros",
-                subtitle = "Selecciona un PDF temporal para trabajar con IA.",
-                onClick = onUploadBook
-            )
+            Card(
+                onClick = onStartChat,
+                modifier = Modifier.fillMaxWidth(),
+                shape = SimpleCardShape,
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Column(Modifier.padding(20.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = SimpleButtonShape,
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Text("＋", fontSize = 34.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                        }
+                        Spacer(Modifier.width(14.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Nuevo chat",
+                                fontSize = 21.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(Modifier.height(3.dp))
+                            Text(
+                                "Escribe lo que quieras o adjunta un archivo.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 13.sp
+                            )
+                        }
+                        Text("›", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+                    }
 
-            Spacer(Modifier.height(10.dp))
+                    Spacer(Modifier.height(14.dp))
+
+                    Text(
+                        "PDF • Word • imágenes • apuntes • tareas • presentaciones",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(18.dp))
 
             FeatureTile(
                 icon = "📄",
                 title = "Mis resúmenes",
-                subtitle = "Materiales guardados y editables.",
+                subtitle = "Materiales que decidas guardar para estudiar.",
                 onClick = null
             )
 
@@ -132,26 +166,15 @@ fun HomeScreen(
             FeatureTile(
                 icon = "🎓",
                 title = "Modo estudio",
-                subtitle = "Repaso y examen desde un resumen guardado.",
+                subtitle = "Se habilitará desde un resumen guardado.",
                 onClick = null
             )
 
-            Spacer(Modifier.height(10.dp))
-
-            FeatureTile(
-                icon = "💬",
-                title = "Chat con IA",
-                subtitle = "Selecciona un libro y escribe lo que necesitas.",
-                onClick = onUploadBook
-            )
-
             Spacer(Modifier.height(22.dp))
-            SimpleSectionTitle("Actividad reciente")
-            Spacer(Modifier.height(10.dp))
 
             SimpleInfoCard(
-                title = "Tu actividad aparecerá aquí",
-                body = "Resúmenes, sesiones de estudio, exámenes y presentaciones se organizarán dentro de tu cuenta."
+                title = "Más simple",
+                body = "Ya no necesitas entrar por “Mis libros” y después por “Chat con IA”. Abres un chat, adjuntas algo si quieres y preguntas directamente."
             )
 
             Spacer(Modifier.height(24.dp))
@@ -174,32 +197,10 @@ fun HomeScreen(
         AlertDialog(
             onDismissRequest = { showBuyCredits = false },
             title = { Text("Comprar créditos") },
-            text = {
-                Column {
-                    Text("Elige un paquete.")
-                    Spacer(Modifier.height(12.dp))
-                    CreditPackage("5 créditos")
-                    CreditPackage("10 créditos")
-                    CreditPackage("25 créditos")
-                }
-            },
+            text = { Text("Los paquetes se habilitarán cuando terminemos de medir el costo real de las funciones.") },
             confirmButton = {
-                TextButton(onClick = { showBuyCredits = false }) {
-                    Text("CERRAR")
-                }
+                TextButton(onClick = { showBuyCredits = false }) { Text("CERRAR") }
             }
         )
-    }
-}
-
-@Composable
-private fun CreditPackage(label: String) {
-    OutlinedButton(
-        onClick = {},
-        enabled = false,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
-        shape = SimpleButtonShape
-    ) {
-        Text(label)
     }
 }
