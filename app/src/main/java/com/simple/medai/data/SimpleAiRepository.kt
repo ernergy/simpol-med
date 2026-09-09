@@ -13,18 +13,13 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-data class AiAttachment(
-    val uri:String,
-    val name:String,
-    val mimeType:String,
-    val sizeBytes:Long
-)
-
+data class AiAttachment(val uri:String,val name:String,val mimeType:String,val sizeBytes:Long)
 data class SimpleAiResult(
     val answer:String,
     val model:String?=null,
     val responseId:String?=null,
-    val retainedFileId:String?=null
+    val retainedFileId:String?=null,
+    val artifactType:String?=null
 )
 
 object SimpleAiRepository {
@@ -37,6 +32,7 @@ object SimpleAiRepository {
         action:String,
         attachment:AiAttachment?,
         previousResponseId:String?,
+        requestedArtifact:String?,
         onUploadProgress:(Int)->Unit={}
     ):SimpleAiResult=withContext(Dispatchers.IO){
         val fileId=if(attachment!=null){
@@ -48,9 +44,8 @@ object SimpleAiRepository {
         val json=post("simple-ai",JSONObject().apply{
             put("prompt",prompt)
             put("action",action)
-            if(!previousResponseId.isNullOrBlank()){
-                put("previousResponseId",previousResponseId)
-            }
+            if(!previousResponseId.isNullOrBlank()) put("previousResponseId",previousResponseId)
+            if(!requestedArtifact.isNullOrBlank()) put("requestedArtifact",requestedArtifact)
             if(fileId!=null){
                 put("fileId",fileId)
                 put("attachmentName",attachment?.name?:"")
@@ -65,128 +60,76 @@ object SimpleAiRepository {
             answer=answer,
             model=json.optString("model").takeIf{it.isNotBlank()},
             responseId=json.optString("response_id").takeIf{it.isNotBlank()},
-            retainedFileId=json.optString("retained_file_id").takeIf{it.isNotBlank()}
+            retainedFileId=json.optString("retained_file_id").takeIf{it.isNotBlank()},
+            artifactType=json.optString("artifact_type").takeIf{it.isNotBlank()}
         )
     }
 
     suspend fun cleanupFiles(fileIds:Collection<String>)=withContext(Dispatchers.IO){
         if(fileIds.isEmpty()) return@withContext
-        post(
-            "simple-ai",
-            JSONObject().apply{
-                put("action","__cleanup__")
-                put("fileIds",JSONArray(fileIds.toList()))
-            },
-            60_000
-        )
+        post("simple-ai",JSONObject().apply{
+            put("action","__cleanup__")
+            put("fileIds",JSONArray(fileIds.toList()))
+        },60_000)
     }
 
-    private fun uploadInParts(
-        context:Context,
-        file:AiAttachment,
-        onProgress:(Int)->Unit
-    ):String{
+    private fun uploadInParts(context:Context,file:AiAttachment,onProgress:(Int)->Unit):String{
         val init=post("simple-upload",JSONObject().apply{
-            put("action","init")
-            put("bytes",file.sizeBytes)
-            put("filename",file.name)
-            put("mimeType",file.mimeType)
+            put("action","init");put("bytes",file.sizeBytes);put("filename",file.name);put("mimeType",file.mimeType)
         },60_000)
-
         val uploadId=init.getString("uploadId")
         val parts=mutableListOf<String>()
         var uploaded=0L
-
         try{
             context.contentResolver.openInputStream(Uri.parse(file.uri))?.use{input->
                 val buffer=ByteArray(CHUNK_BYTES)
-
                 while(true){
                     var count=0
                     while(count<buffer.size){
                         val n=input.read(buffer,count,buffer.size-count)
-                        if(n<=0) break
+                        if(n<=0)break
                         count+=n
                     }
-                    if(count==0) break
-
-                    val bytes=if(count==buffer.size) buffer else buffer.copyOf(count)
-
+                    if(count==0)break
+                    val bytes=if(count==buffer.size)buffer else buffer.copyOf(count)
                     val part=post("simple-upload",JSONObject().apply{
                         put("action","part")
                         put("uploadId",uploadId)
                         put("dataBase64",Base64.encodeToString(bytes,Base64.NO_WRAP))
                     },90_000)
-
                     parts+=part.getString("partId")
                     uploaded+=count
-
-                    onProgress(
-                        ((uploaded*100)/file.sizeBytes)
-                            .coerceIn(0,100)
-                            .toInt()
-                    )
-
-                    if(count<buffer.size) break
+                    onProgress(((uploaded*100)/file.sizeBytes).coerceIn(0,100).toInt())
+                    if(count<buffer.size)break
                 }
-            } ?: error("No se pudo abrir el archivo.")
-
+            }?:error("No se pudo abrir el archivo.")
             val done=post("simple-upload",JSONObject().apply{
-                put("action","complete")
-                put("uploadId",uploadId)
-                put("partIds",JSONArray(parts))
+                put("action","complete");put("uploadId",uploadId);put("partIds",JSONArray(parts))
             },90_000)
-
             onProgress(100)
             return done.getString("fileId")
         }catch(e:Exception){
-            try{
-                post("simple-upload",JSONObject().apply{
-                    put("action","cancel")
-                    put("uploadId",uploadId)
-                },30_000)
-            }catch(_:Exception){}
+            try{post("simple-upload",JSONObject().apply{put("action","cancel");put("uploadId",uploadId)},30_000)}catch(_:Exception){}
             throw e
         }
     }
 
-    private fun post(
-        function:String,
-        body:JSONObject,
-        timeout:Int
-    ):JSONObject{
-        val session=SupabaseManager.client.auth.currentSessionOrNull()
-            ?: error("Tu sesión ha expirado.")
-
-        val conn=(URL(
-            BuildConfig.SUPABASE_URL.trimEnd('/')+"/functions/v1/$function"
-        ).openConnection() as HttpURLConnection).apply{
-            requestMethod="POST"
-            connectTimeout=30_000
-            readTimeout=timeout
-            doOutput=true
+    private fun post(function:String,body:JSONObject,timeout:Int):JSONObject{
+        val session=SupabaseManager.client.auth.currentSessionOrNull()?:error("Tu sesión ha expirado.")
+        val conn=(URL(BuildConfig.SUPABASE_URL.trimEnd('/')+"/functions/v1/$function").openConnection() as HttpURLConnection).apply{
+            requestMethod="POST";connectTimeout=30_000;readTimeout=timeout;doOutput=true
             setRequestProperty("Content-Type","application/json")
             setRequestProperty("Authorization","Bearer ${session.accessToken}")
             setRequestProperty("apikey",BuildConfig.SUPABASE_PUBLISHABLE_KEY)
         }
-
         try{
-            conn.outputStream.use{
-                it.write(body.toString().toByteArray(Charsets.UTF_8))
-            }
-
+            conn.outputStream.use{it.write(body.toString().toByteArray(Charsets.UTF_8))}
             val status=conn.responseCode
-            val stream=if(status in 200..299) conn.inputStream else conn.errorStream
+            val stream=if(status in 200..299)conn.inputStream else conn.errorStream
             val text=stream?.bufferedReader()?.use{it.readText()}.orEmpty()
-            val json=if(text.isBlank()) JSONObject() else JSONObject(text)
-
-            if(status !in 200..299){
-                error(json.optString("error","Error de conexión."))
-            }
-
+            val json=if(text.isBlank())JSONObject() else JSONObject(text)
+            if(status !in 200..299) error(json.optString("error","Error de conexión."))
             return json
-        }finally{
-            conn.disconnect()
-        }
+        }finally{conn.disconnect()}
     }
 }

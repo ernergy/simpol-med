@@ -1,0 +1,24 @@
+SIMPLE UPDATE 17 - DETECCION AUTOMATICA DE ARCHIVOS
+
+Backend simple-ai v9 ya desplegado.
+
+Sube a GitHub:
+1) app/src/main/java/com/simple/medai/data/SimpleAiRepository.kt
+2) app/src/main/java/com/simple/medai/screens/StudySessionScreen.kt
+
+Ahora reconoce:
+- dame el archivo ppt
+- pasame el PowerPoint
+- hazme una presentacion
+- quiero las diapositivas
+- dame el archivo
+
+Si antes se habló de una presentación, “dame el archivo” conserva el tipo PPTX.
+
+La IA ya recibe la instrucción de NO responder “no puedo adjuntar archivos” cuando SIMPLE sí puede exportar.
+
+Prueba:
+1. Hazme 5 diapositivas sobre la prueba hidráulica.
+2. Dame el archivo PPT.
+Debe aparecer:
+⬇ DESCARGAR POWERPOINT
