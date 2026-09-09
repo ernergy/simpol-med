@@ -1,0 +1,1 @@
+Supabase ya tiene admin_cost_entries y admin_finance_summary. Sube web/app/page.tsx y web/app/globals.css al repo; Vercel desplegará automáticamente.
