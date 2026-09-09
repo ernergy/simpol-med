@@ -1,0 +1,21 @@
+SIMPLE UPDATE 15 — MEMORIA REAL DEL CHAT
+
+Backend simple-ai v6 YA desplegado.
+
+Sube a GitHub:
+1. app/src/main/java/com/simple/medai/data/SimpleAiRepository.kt
+2. app/src/main/java/com/simple/medai/screens/StudySessionScreen.kt
+
+Qué cambia:
+- cada respuesta devuelve response_id
+- Android guarda ese response_id mientras el chat está abierto
+- siguiente pregunta envía previousResponseId
+- SIMPLE recuerda preguntas, respuestas y contexto del mismo chat
+- al salir del chat y crear otro, empieza una conversación nueva
+- mantiene archivos grandes y PowerPoint descargable
+
+Prueba:
+1. "Explícame la hipertensión."
+2. Luego: "¿Y cuáles son sus principales complicaciones?"
+3. Luego: "Ahora hazme 5 diapositivas de lo que acabamos de hablar."
+La tercera petición debe entender todo el contexto anterior.
