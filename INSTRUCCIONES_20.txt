@@ -1,0 +1,37 @@
+SIMPLE UPDATE 20 — MODO ESTUDIO
+
+BACKEND:
+simple-study v1 YA desplegado en Supabase.
+
+NUEVO:
+- Botón Modo estudio habilitado desde Inicio.
+- El usuario escribe cualquier tema.
+- SIMPLE genera exactamente 10 preguntas.
+- Cada pregunta tiene 4 opciones.
+- El usuario responde una por una.
+- SIMPLE muestra correcto/incorrecto y una explicación.
+- Se muestra puntaje y progreso.
+- Al terminar:
+  SIGAMOS PRACTICANDO -> genera otras 10 preguntas del mismo tema.
+- SIMPLE evita repetir preguntas de rondas anteriores.
+- CAMBIAR DE TEMA -> inicia otra práctica.
+
+SUBE A GITHUB:
+1) app/src/main/java/com/simple/medai/data/StudyRepository.kt
+2) app/src/main/java/com/simple/medai/screens/StudyModeScreen.kt
+3) app/src/main/java/com/simple/medai/screens/SimpleApp.kt
+4) app/src/main/java/com/simple/medai/screens/HomeScreen.kt
+
+DESPUÉS:
+git pull origin main
+Build -> Clean Project
+Build -> Assemble Project
+Run
+
+PRUEBA:
+Modo estudio
+Tema: "Insuficiencia cardíaca"
+Empezar práctica
+Responder las 10
+Sigamos practicando
+Debe generar otras 10 distintas.
