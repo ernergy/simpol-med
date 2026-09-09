@@ -1,0 +1,25 @@
+SIMPLE UPDATE 12 — ARCHIVOS GRANDES SIN BIBLIOTECA
+
+BACKEND YA ACTUALIZADO:
+- simple-upload v1: subida por partes.
+- simple-ai v5: recibe file_id, procesa y elimina el archivo temporal al terminar.
+- No usa Supabase Storage para guardar los archivos del usuario.
+
+ANDROID:
+Reemplaza solamente:
+1) app/src/main/java/com/simple/medai/data/SimpleAiRepository.kt
+2) app/src/main/java/com/simple/medai/screens/StudySessionScreen.kt
+
+Cambios:
+- El archivo NO se carga completo en RAM.
+- Se lee desde el almacenamiento del celular en bloques de 3 MB.
+- Barra de progreso de subida.
+- Límite operativo actual: 512 MB por archivo.
+- El archivo temporal se elimina del backend después de procesarlo.
+- Sigue siendo un solo chat, sin biblioteca de libros.
+
+Después:
+git pull origin main
+Build -> Clean Project
+Build -> Assemble Project
+Run

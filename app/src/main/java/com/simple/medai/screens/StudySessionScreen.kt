@@ -26,18 +26,17 @@ private data class ChatMessage(
 )
 
 @Composable
-fun StudySessionScreen(
-    onBack: () -> Unit
-) {
+fun StudySessionScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
+    val scroll = rememberScrollState()
 
     var prompt by remember { mutableStateOf("") }
     var attachment by remember { mutableStateOf<AiAttachment?>(null) }
+    var action by remember { mutableStateOf("chat") }
     var sending by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
-    var selectedAction by remember { mutableStateOf("chat") }
+    var progress by remember { mutableStateOf<Int?>(null) }
+    var errorText by remember { mutableStateOf("") }
     val messages = remember { mutableStateListOf<ChatMessage>() }
 
     val picker = rememberLauncherForActivityResult(
@@ -45,167 +44,116 @@ fun StudySessionScreen(
     ) { uri ->
         if (uri != null) {
             try {
-                val info = readAttachmentInfo(context, uri)
-                if (info.sizeBytes > SimpleAiRepository.MAX_ATTACHMENT_BYTES) {
-                    errorMessage = "El archivo supera el límite temporal de 10 MB."
-                    attachment = null
-                } else {
-                    attachment = info
-                    errorMessage = ""
-                }
+                attachment = readAttachment(context, uri)
+                errorText = ""
             } catch (e: Exception) {
-                errorMessage = e.message ?: "No se pudo adjuntar el archivo."
+                errorText = e.message ?: "No se pudo adjuntar."
             }
         }
     }
 
     LaunchedEffect(messages.size, sending) {
-        if (messages.isNotEmpty()) {
-            scrollState.animateScrollTo(scrollState.maxValue)
-        }
+        if (messages.isNotEmpty()) scroll.animateScrollTo(scroll.maxValue)
     }
 
-    Surface(
-        Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
+    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
+            Modifier.fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .imePadding()
-                .verticalScroll(scrollState)
+                .verticalScroll(scroll)
                 .padding(18.dp)
         ) {
-            SimpleBackButton(
-                onClick = onBack,
-                label = "INICIO"
-            )
+            SimpleBackButton(onClick = onBack, label = "INICIO")
+            Spacer(Modifier.height(14.dp))
+            SimpleHeader("SIMPLE IA", "Escribe o adjunta desde tu celular.")
 
             Spacer(Modifier.height(14.dp))
-
-            SimpleHeader(
-                title = "SIMPLE IA",
-                subtitle = "Pregunta, adjunta y trabaja en un solo lugar."
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            QuickActions(
-                onAction = { action, text ->
-                    selectedAction = action
-                    prompt = text
-                }
-            )
+            QuickActions { a, starter ->
+                action = a
+                prompt = starter
+            }
 
             if (messages.isNotEmpty()) {
-                Spacer(Modifier.height(18.dp))
-                messages.forEach { message ->
-                    ChatBubble(message)
-                    Spacer(Modifier.height(9.dp))
+                Spacer(Modifier.height(16.dp))
+                messages.forEach {
+                    ChatBubble(it)
+                    Spacer(Modifier.height(8.dp))
                 }
+            }
 
-                if (sending) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = SimpleCardShape
-                    ) {
-                        Row(Modifier.padding(16.dp)) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
+            if (sending) {
+                Spacer(Modifier.height(10.dp))
+                Card(Modifier.fillMaxWidth(), shape = SimpleCardShape) {
+                    Column(Modifier.padding(15.dp)) {
+                        if (progress != null && progress!! < 100) {
+                            Text("Subiendo archivo… ${progress}%")
+                            Spacer(Modifier.height(8.dp))
+                            LinearProgressIndicator(
+                                progress = { progress!! / 100f },
+                                modifier = Modifier.fillMaxWidth()
                             )
-                            Spacer(Modifier.width(10.dp))
-                            Text("SIMPLE está trabajando...")
+                        } else {
+                            Row {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(Modifier.width(10.dp))
+                                Text("SIMPLE está trabajando…")
+                            }
                         }
                     }
                 }
             }
 
-            Spacer(Modifier.height(18.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = SimpleCardShape
-            ) {
+            Spacer(Modifier.height(16.dp))
+            Card(Modifier.fillMaxWidth(), shape = SimpleCardShape) {
                 Column(Modifier.padding(14.dp)) {
-
-                    attachment?.let { file ->
+                    attachment?.let { f ->
                         Surface(
                             color = MaterialTheme.colorScheme.primaryContainer,
                             shape = SimpleButtonShape
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp)
-                            ) {
+                            Row(Modifier.fillMaxWidth().padding(12.dp)) {
                                 Text("📎", fontSize = 20.sp)
                                 Spacer(Modifier.width(8.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(
-                                        file.name,
-                                        fontWeight = FontWeight.Bold,
-                                        maxLines = 1
-                                    )
-                                    Text(
-                                        formatBytes(file.sizeBytes),
-                                        fontSize = 11.sp,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
+                                    Text(f.name, fontWeight = FontWeight.Bold, maxLines = 1)
+                                    Text(formatBytes(f.sizeBytes), fontSize = 11.sp)
                                 }
-                                TextButton(
-                                    onClick = { attachment = null }
-                                ) {
+                                TextButton(onClick = { attachment = null }) {
                                     Text("QUITAR")
                                 }
                             }
                         }
-
                         Spacer(Modifier.height(10.dp))
                     }
 
                     OutlinedTextField(
                         value = prompt,
-                        onValueChange = {
-                            prompt = it
-                            selectedAction = "chat"
-                            errorMessage = ""
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 110.dp),
+                        onValueChange = { prompt = it; errorText = "" },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 115.dp),
                         enabled = !sending,
-                        placeholder = {
-                            Text(
-                                "Escribe lo que quieras...\nEj.: Resume este archivo, resuelve esta tarea o crea 8 diapositivas."
-                            )
-                        },
+                        placeholder = { Text("Escribe lo que quieras…") },
                         shape = SimpleButtonShape
                     )
 
-                    if (errorMessage.isNotBlank()) {
+                    if (errorText.isNotBlank()) {
                         Spacer(Modifier.height(8.dp))
-                        Text(
-                            errorMessage,
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 12.sp
-                        )
+                        Text(errorText, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
                     }
 
                     Spacer(Modifier.height(10.dp))
-
                     Row {
                         OutlinedButton(
-                            onClick = {
-                                picker.launch(arrayOf("*/*"))
-                            },
+                            onClick = { picker.launch(arrayOf("*/*")) },
                             enabled = !sending,
                             modifier = Modifier.height(52.dp),
                             shape = SimpleButtonShape
                         ) {
-                            Text("＋", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                            Text("＋", fontSize = 23.sp, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.width(5.dp))
                             Text("ADJUNTAR")
                         }
@@ -214,223 +162,141 @@ fun StudySessionScreen(
 
                         Button(
                             onClick = {
-                                val text = prompt.trim()
-
-                                if (text.isBlank() && attachment == null) {
-                                    errorMessage = "Escribe algo o adjunta un archivo."
-                                    return@Button
-                                }
-
-                                val shownText = if (text.isBlank()) {
+                                val typed = prompt.trim()
+                                val file = attachment
+                                if (typed.isBlank() && file == null) return@Button
+                                val request = if (typed.isBlank())
                                     "Analiza este archivo y dime lo más importante."
-                                } else text
+                                else typed
 
-                                val currentAttachment = attachment
-
-                                messages.add(
-                                    ChatMessage(
-                                        fromUser = true,
-                                        text = shownText,
-                                        attachmentName = currentAttachment?.name
-                                    )
-                                )
-
+                                messages += ChatMessage(true, request, file?.name)
                                 prompt = ""
                                 attachment = null
                                 sending = true
-                                errorMessage = ""
+                                progress = if (file != null) 0 else null
+                                errorText = ""
 
                                 scope.launch {
                                     try {
                                         val result = SimpleAiRepository.ask(
                                             context = context,
-                                            prompt = shownText,
-                                            action = selectedAction,
-                                            attachment = currentAttachment
+                                            prompt = request,
+                                            action = action,
+                                            attachment = file,
+                                            onUploadProgress = { progress = it }
                                         )
-
-                                        messages.add(
-                                            ChatMessage(
-                                                fromUser = false,
-                                                text = result.answer
-                                            )
-                                        )
+                                        messages += ChatMessage(false, result.answer)
                                     } catch (e: Exception) {
-                                        errorMessage =
-                                            e.message ?: "No se pudo consultar la IA."
+                                        errorText = e.message ?: "No se pudo procesar."
                                     } finally {
                                         sending = false
-                                        selectedAction = "chat"
+                                        progress = null
+                                        action = "chat"
                                     }
                                 }
                             },
                             enabled = !sending && (prompt.isNotBlank() || attachment != null),
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(52.dp),
+                            modifier = Modifier.weight(1f).height(52.dp),
                             shape = SimpleButtonShape
                         ) {
-                            Text(if (sending) "..." else "ENVIAR ➤", fontWeight = FontWeight.Bold)
+                            Text("ENVIAR ➤", fontWeight = FontWeight.Bold)
                         }
                     }
 
                     Spacer(Modifier.height(7.dp))
-
                     Text(
-                        "Adjuntos temporales: máximo 10 MB por consulta. SIMPLE no los guarda como biblioteca.",
+                        "Los archivos se leen desde tu celular, se procesan temporalmente y no se guardan como biblioteca.",
                         fontSize = 10.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-
-            Spacer(Modifier.height(22.dp))
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
 
 @Composable
-private fun QuickActions(
-    onAction: (String, String) -> Unit
-) {
-    Text(
-        "Acciones rápidas",
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Bold
-    )
-    Spacer(Modifier.height(8.dp))
-
+private fun QuickActions(onAction: (String, String) -> Unit) {
     Row(Modifier.fillMaxWidth()) {
-        QuickButton(
-            modifier = Modifier.weight(1f),
-            label = "📄 Resumir",
-            onClick = {
-                onAction("resumen", "Resume el contenido adjunto de forma clara y estructurada.")
-            }
-        )
-        Spacer(Modifier.width(8.dp))
-        QuickButton(
-            modifier = Modifier.weight(1f),
-            label = "📊 Diapositivas",
-            onClick = {
-                onAction("diapositivas", "Crea una presentación por diapositivas a partir del contenido adjunto o del tema que escribiré.")
-            }
-        )
+        QuickButton(Modifier.weight(1f), "📄 Resumir") {
+            onAction("resumen", "Resume el archivo o tema de forma clara y estructurada.")
+        }
+        Spacer(Modifier.width(7.dp))
+        QuickButton(Modifier.weight(1f), "📊 Diapositivas") {
+            onAction("diapositivas", "Prepara una presentación profesional sobre: ")
+        }
     }
-
-    Spacer(Modifier.height(8.dp))
-
+    Spacer(Modifier.height(7.dp))
     Row(Modifier.fillMaxWidth()) {
-        QuickButton(
-            modifier = Modifier.weight(1f),
-            label = "✍ Tarea",
-            onClick = {
-                onAction("tarea", "Ayúdame a resolver esta tarea de manera clara, correcta y lista para revisar.")
-            }
-        )
-        Spacer(Modifier.width(8.dp))
-        QuickButton(
-            modifier = Modifier.weight(1f),
-            label = "🧠 Explicar",
-            onClick = {
-                onAction("explicar", "Explícame este contenido de forma sencilla y didáctica.")
-            }
-        )
+        QuickButton(Modifier.weight(1f), "✍ Tarea") {
+            onAction("tarea", "Ayúdame a resolver esta tarea: ")
+        }
+        Spacer(Modifier.width(7.dp))
+        QuickButton(Modifier.weight(1f), "🧠 Explicar") {
+            onAction("explicar", "Explícame de forma sencilla: ")
+        }
     }
 }
 
 @Composable
-private fun QuickButton(
-    modifier: Modifier,
-    label: String,
-    onClick: () -> Unit
-) {
+private fun QuickButton(modifier: Modifier, label: String, onClick: () -> Unit) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(48.dp),
-        shape = SimpleButtonShape
-    ) {
-        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-    }
+        modifier = modifier.height(46.dp),
+        shape = SimpleButtonShape,
+        contentPadding = PaddingValues(horizontal = 6.dp)
+    ) { Text(label, fontSize = 11.sp, fontWeight = FontWeight.Bold) }
 }
 
 @Composable
-private fun ChatBubble(message: ChatMessage) {
+private fun ChatBubble(m: ChatMessage) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        Modifier.fillMaxWidth(),
         shape = SimpleCardShape,
         colors = CardDefaults.cardColors(
-            containerColor = if (message.fromUser) {
+            containerColor = if (m.fromUser)
                 MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
+            else MaterialTheme.colorScheme.surface
         )
     ) {
         Column(Modifier.padding(15.dp)) {
-            Text(
-                if (message.fromUser) "Tú" else "SIMPLE",
-                fontWeight = FontWeight.Bold,
-                fontSize = 12.sp
-            )
-
-            message.attachmentName?.let {
-                Spacer(Modifier.height(5.dp))
-                Text(
-                    "📎 $it",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+            Text(if (m.fromUser) "Tú" else "SIMPLE", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            m.attachmentName?.let {
+                Spacer(Modifier.height(4.dp))
+                Text("📎 $it", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
-
-            Spacer(Modifier.height(6.dp))
-            Text(message.text)
+            Spacer(Modifier.height(5.dp))
+            Text(m.text)
         }
     }
 }
 
-private fun readAttachmentInfo(
-    context: Context,
-    uri: Uri
-): AiAttachment {
+private fun readAttachment(context: Context, uri: Uri): AiAttachment {
     var name = "archivo"
     var size = -1L
-
     context.contentResolver.query(
         uri,
         arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE),
-        null,
-        null,
-        null
-    )?.use { cursor ->
-        if (cursor.moveToFirst()) {
-            val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-            val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-
-            if (nameIndex >= 0) {
-                name = cursor.getString(nameIndex) ?: name
-            }
-
-            if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) {
-                size = cursor.getLong(sizeIndex)
-            }
+        null, null, null
+    )?.use { c ->
+        if (c.moveToFirst()) {
+            val ni = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+            val si = c.getColumnIndex(OpenableColumns.SIZE)
+            if (ni >= 0) name = c.getString(ni) ?: name
+            if (si >= 0 && !c.isNull(si)) size = c.getLong(si)
         }
     }
-
-    val mime = context.contentResolver.getType(uri)
-        ?: "application/octet-stream"
-
     return AiAttachment(
         uri = uri.toString(),
         name = name,
-        mimeType = mime,
+        mimeType = context.contentResolver.getType(uri) ?: "application/octet-stream",
         sizeBytes = size
     )
 }
 
-private fun formatBytes(bytes: Long): String {
-    if (bytes < 0) return "tamaño desconocido"
-    val kb = bytes / 1024.0
-    if (kb < 1024) return "%.1f KB".format(kb)
-    return "%.1f MB".format(kb / 1024.0)
+private fun formatBytes(b: Long): String {
+    if (b < 0) return "tamaño desconocido"
+    val mb = b / 1024.0 / 1024.0
+    return if (mb < 1) "%.1f KB".format(b / 1024.0) else "%.1f MB".format(mb)
 }
