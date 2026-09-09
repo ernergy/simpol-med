@@ -1,0 +1,27 @@
+SIMPLE UPDATE 19 — WORD DESCARGABLE
+
+BACKEND YA LISTO:
+- simple-export v5: PPTX + DOCX
+- simple-ai v11: sabe que SIMPLE sí puede generar archivos y no debe responder "no puedo adjuntar"
+
+SUBIR:
+app/src/main/java/com/simple/medai/data/SimpleExportRepository.kt
+
+ADEMÁS EN StudySessionScreen.kt:
+La versión debe detectar:
+word, docx, documento word, word editable -> artifact "docx"
+
+Y cada respuesta debe soportar artifactType, no solo canExportPptx.
+
+Para DOCX:
+SimpleExportRepository.createWord(message.text, titleFromContent(message.text))
+
+Luego usar ActivityResultContracts.CreateDocument(
+"application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+)
+
+El botón debe decir:
+⬇ DESCARGAR WORD
+
+IMPORTANTE:
+No basta con cambiar el prompt de la IA. El archivo real lo genera simple-export.
