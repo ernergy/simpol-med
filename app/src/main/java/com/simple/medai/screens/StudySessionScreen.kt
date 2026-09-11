@@ -1,4 +1,4 @@
-package com.simple.medai.screens
+﻿package com.simple.medai.screens
 
 import android.content.Context
 import android.net.Uri
@@ -13,6 +13,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
@@ -396,7 +398,19 @@ private fun ChatBubble(
     onDownload: (() -> Unit)?
 ) {
     val uriHandler = LocalUriHandler.current
-    var zoom by remember(message.text) { mutableFloatStateOf(1f) }
+
+    var zoom by remember(message.text) {
+        mutableFloatStateOf(1f)
+    }
+
+    var pan by remember(message.text) {
+        mutableStateOf(Offset.Zero)
+    }
+
+    fun resetView() {
+        zoom = 1f
+        pan = Offset.Zero
+    }
 
     Card(
         Modifier.fillMaxWidth(),
@@ -410,11 +424,15 @@ private fun ChatBubble(
                 }
         )
     ) {
-        Column(Modifier.padding(15.dp)) {
+        Column(
+            Modifier.padding(15.dp)
+        ) {
+
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+
                 Text(
                     if (message.fromUser) "Tú" else "SIMPLE",
                     fontWeight = FontWeight.Bold,
@@ -422,27 +440,54 @@ private fun ChatBubble(
                 )
 
                 if (!message.fromUser) {
+
                     Row {
-                        TextButton(
-                            onClick = { zoom = (zoom - 0.1f).coerceAtLeast(0.8f) },
-                            contentPadding = PaddingValues(horizontal = 6.dp)
-                        ) { Text("A−") }
 
                         TextButton(
-                            onClick = { zoom = 1f },
-                            contentPadding = PaddingValues(horizontal = 6.dp)
-                        ) { Text("${(zoom * 100).toInt()}%") }
+                            onClick = {
+                                zoom =
+                                    (zoom - 0.1f)
+                                        .coerceAtLeast(0.8f)
+                            },
+                            contentPadding =
+                                PaddingValues(horizontal = 6.dp)
+                        ) {
+                            Text("A−")
+                        }
 
                         TextButton(
-                            onClick = { zoom = (zoom + 0.1f).coerceAtMost(2.2f) },
-                            contentPadding = PaddingValues(horizontal = 6.dp)
-                        ) { Text("A+") }
+                            onClick = {
+                                resetView()
+                            },
+                            contentPadding =
+                                PaddingValues(horizontal = 6.dp)
+                        ) {
+                            Text(
+                                "${(zoom * 100).toInt()}%"
+                            )
+                        }
+
+                        TextButton(
+                            onClick = {
+                                zoom =
+                                    (zoom + 0.1f)
+                                        .coerceAtMost(2.5f)
+                            },
+                            contentPadding =
+                                PaddingValues(horizontal = 6.dp)
+                        ) {
+                            Text("A+")
+                        }
                     }
                 }
             }
 
             message.attachmentName?.let {
-                Spacer(Modifier.height(4.dp))
+
+                Spacer(
+                    Modifier.height(4.dp)
+                )
+
                 Text(
                     "📎 $it",
                     fontSize = 12.sp,
@@ -450,86 +495,179 @@ private fun ChatBubble(
                 )
             }
 
-            Spacer(Modifier.height(5.dp))
+            Spacer(
+                Modifier.height(5.dp)
+            )
 
             if (message.fromUser) {
-                Text(message.text)
-            } else {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .pointerInput(message.text) {
-                            detectTransformGestures { _, _, gestureZoom, _ ->
-                                zoom = (zoom * gestureZoom).coerceIn(0.8f, 2.2f)
-                            }
-                        },
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.22f),
-                    shape = SimpleButtonShape
-                ) {
-                    Text(
-                        text = message.text,
-                        fontSize = (16f * zoom).sp,
-                        lineHeight = (23f * zoom).sp,
-                        modifier = Modifier.padding(12.dp)
-                    )
-                }
 
                 Text(
-                    "Pellizca con dos dedos para ampliar o usa A− / A+.",
+                    message.text
+                )
+
+            } else {
+
+                Surface(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    color =
+                        MaterialTheme.colorScheme
+                            .surfaceVariant
+                            .copy(alpha = 0.22f),
+                    shape =
+                        SimpleButtonShape
+                ) {
+
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(320.dp)
+                                .pointerInput(message.text) {
+
+                                    detectTransformGestures {
+                                            _,
+                                            gesturePan,
+                                            gestureZoom,
+                                            _ ->
+
+                                        zoom =
+                                            (zoom * gestureZoom)
+                                                .coerceIn(
+                                                    0.8f,
+                                                    2.5f
+                                                )
+
+                                        pan += gesturePan
+                                    }
+                                }
+                    ) {
+
+                        Text(
+                            text = message.text,
+                            fontSize = 16.sp,
+                            lineHeight = 23.sp,
+                            modifier =
+                                Modifier
+                                    .padding(14.dp)
+                                    .graphicsLayer {
+                                        scaleX = zoom
+                                        scaleY = zoom
+                                        translationX = pan.x
+                                        translationY = pan.y
+                                        transformOrigin =
+                                            androidx.compose.ui.graphics.TransformOrigin(
+                                                0f,
+                                                0f
+                                            )
+                                        clip = true
+                                    }
+                        )
+                    }
+                }
+
+                Spacer(
+                    Modifier.height(5.dp)
+                )
+
+                Text(
+                    "Pellizca para ampliar. Arrastra con un dedo para mover el texto. Toca el porcentaje para volver a 100%.",
                     fontSize = 10.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 5.dp)
+                    color =
+                        MaterialTheme.colorScheme
+                            .onSurfaceVariant
                 )
             }
 
             if (message.sources.isNotEmpty()) {
-                Spacer(Modifier.height(14.dp))
+
+                Spacer(
+                    Modifier.height(14.dp)
+                )
+
                 HorizontalDivider()
-                Spacer(Modifier.height(10.dp))
+
+                Spacer(
+                    Modifier.height(10.dp)
+                )
+
                 Text(
                     "FUENTES CONSULTADAS",
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp
                 )
 
-                message.sources.forEachIndexed { index, source ->
-                    Spacer(Modifier.height(4.dp))
-                    if (!source.url.isNullOrBlank()) {
+                message.sources.forEachIndexed {
+                        index,
+                        source ->
+
+                    Spacer(
+                        Modifier.height(4.dp)
+                    )
+
+                    if (
+                        !source.url
+                            .isNullOrBlank()
+                    ) {
+
                         TextButton(
                             onClick = {
                                 try {
-                                    uriHandler.openUri(source.url)
-                                } catch (_: Exception) {
+                                    uriHandler.openUri(
+                                        source.url
+                                    )
+                                } catch (
+                                    _: Exception
+                                ) {
                                 }
                             },
-                            contentPadding = PaddingValues(0.dp)
+                            contentPadding =
+                                PaddingValues(0.dp)
                         ) {
-                            Text("${index + 1}. ${source.title} ↗", fontSize = 12.sp)
+
+                            Text(
+                                "${index + 1}. ${source.title} ↗",
+                                fontSize = 12.sp
+                            )
                         }
+
                     } else {
-                        Text("${index + 1}. ${source.title}", fontSize = 12.sp)
+
+                        Text(
+                            "${index + 1}. ${source.title}",
+                            fontSize = 12.sp
+                        )
                     }
                 }
             }
 
             if (onDownload != null) {
-                Spacer(Modifier.height(14.dp))
+
+                Spacer(
+                    Modifier.height(14.dp)
+                )
+
                 Button(
                     onClick = onDownload,
                     enabled = !exporting,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = SimpleButtonShape
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    shape =
+                        SimpleButtonShape
                 ) {
+
                     Text(
-                        if (exporting) "CREANDO POWERPOINT…"
-                        else "⬇ DESCARGAR POWERPOINT"
+                        if (exporting) {
+                            "CREANDO POWERPOINT…"
+                        } else {
+                            "⬇ DESCARGAR POWERPOINT"
+                        }
                     )
                 }
             }
         }
     }
 }
-
 @Composable
 private fun QuickActions(onAction: (String, String) -> Unit) {
     Row(Modifier.fillMaxWidth()) {
@@ -662,3 +800,4 @@ private fun titleFromContent(text: String): String {
         ?.ifBlank { "Presentacion SIMPLE" }
         ?: "Presentacion SIMPLE"
 }
+
