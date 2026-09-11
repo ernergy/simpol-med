@@ -1,0 +1,40 @@
+SIMPLE UPDATE 23 — ZOOM + CHAT PERSISTENTE + FUENTES
+
+BACKEND
+- simple-ai v12 ya fue desplegado en Supabase.
+- Web search esta habilitado.
+- Las fuentes web se extraen de las citas reales devueltas por OpenAI.
+- Los archivos adjuntos tambien aparecen como fuente.
+- No se inventan enlaces.
+
+ANDROID
+1. Zoom de respuestas:
+   - Pellizco con dos dedos.
+   - Botones A− / porcentaje / A+.
+   - Rango 80% a 220%.
+
+2. Persistencia:
+   - Rotar vertical/horizontal ya no debe sacar al usuario del chat.
+   - Se conserva la pantalla actual.
+   - Apagar/encender la pantalla no debe volver a Inicio.
+
+3. Fuentes:
+   - Aparecen debajo de la respuesta.
+   - Las fuentes web se pueden tocar para abrirlas.
+
+COMO APLICAR
+1. Extrae TODO este ZIP dentro de:
+   C:\Users\nelso\AndroidStudioProjects\SIMPLE
+
+2. En PowerShell, desde la carpeta SIMPLE:
+   powershell -ExecutionPolicy Bypass -File .\apply_update_23.ps1
+
+3. Luego:
+   .\gradlew.bat assembleDebug
+
+4. Si compila:
+   git add app/src/main/AndroidManifest.xml app/src/main/java/com/simple/medai/data/SimpleAiRepository.kt app/src/main/java/com/simple/medai/screens/SimpleApp.kt app/src/main/java/com/simple/medai/screens/StudySessionScreen.kt
+   git commit -m "Add answer zoom chat persistence and verified sources"
+   git push origin main
+
+LA VENTANA FLOTANTE NO ESTA INCLUIDA TODAVIA.
