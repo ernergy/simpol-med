@@ -1,0 +1,29 @@
+SIMPLE WEB UPDATE 22 — MENÚ COMPLETO + CONTROL FINANCIERO
+
+Qué recupera:
+- Costos IA (detalle de tokens, costos, 1.000 consultas y últimas consultas).
+- Usuarios.
+- Créditos.
+- Resúmenes.
+- Configuración.
+- Presupuesto / Control financiero nuevo.
+
+Qué conserva:
+- Compra de API de USD 5 ya guardada en Supabase.
+- Saldo estimado.
+- Consumo por modelo.
+- Historial de compras/gastos.
+- Registro y eliminación de gastos.
+
+Archivos a reemplazar:
+1) web/app/page.tsx
+2) web/app/globals.css
+
+Luego ejecutar desde la raíz del proyecto:
+cd web
+npm run build
+cd ..
+git add web/app/page.tsx web/app/globals.css
+git commit -m "Restore admin menu and merge financial control"
+git push origin main
+git push --force-with-lease vercel main:main
