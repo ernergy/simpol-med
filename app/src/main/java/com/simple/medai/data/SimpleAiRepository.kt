@@ -1,4 +1,4 @@
-package com.simple.medai.data
+﻿package com.simple.medai.data
 
 import android.content.Context
 import android.net.Uri
@@ -21,13 +21,20 @@ data class AiAttachment(
     val sizeBytes: Long
 )
 
+data class AiSource(
+    val type: String,
+    val title: String,
+    val url: String? = null
+)
+
 data class SimpleAiResult(
     val answer: String,
     val model: String? = null,
     val responseId: String? = null,
     val retainedFileId: String? = null,
     val vectorStoreId: String? = null,
-    val artifactType: String? = null
+    val artifactType: String? = null,
+    val sources: List<AiSource> = emptyList()
 )
 
 object SimpleAiRepository {
@@ -113,6 +120,23 @@ object SimpleAiRepository {
             error("La IA respondió sin texto.")
         }
 
+        val sourceList = mutableListOf<AiSource>()
+        val sourcesJson = json.optJSONArray("sources")
+
+        if (sourcesJson != null) {
+            for (i in 0 until sourcesJson.length()) {
+                val item = sourcesJson.optJSONObject(i) ?: continue
+                val title = item.optString("title").trim()
+
+                if (title.isBlank()) continue
+
+                sourceList += AiSource(
+                    type = item.optString("type", "web"),
+                    title = title,
+                    url = item.optString("url").takeIf { it.isNotBlank() }
+                )
+            }
+        }
         SimpleAiResult(
             answer = answer,
             model = json.optString("model").takeIf { it.isNotBlank() },
@@ -120,7 +144,8 @@ object SimpleAiRepository {
             retainedFileId = json.optString("retained_file_id").takeIf { it.isNotBlank() },
             vectorStoreId = json.optString("vector_store_id").takeIf { it.isNotBlank() }
                 ?: vectorStoreId,
-            artifactType = json.optString("artifact_type").takeIf { it.isNotBlank() }
+            artifactType = json.optString("artifact_type").takeIf { it.isNotBlank() },
+            sources = sourceList
         )
     }
 
@@ -440,3 +465,4 @@ object SimpleAiRepository {
         }
     }
 }
+

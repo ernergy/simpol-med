@@ -1,6 +1,7 @@
-package com.simple.medai.screens
+﻿package com.simple.medai.screens
 
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import com.simple.medai.data.SupabaseRepository
 
 private enum class Screen {
@@ -13,7 +14,7 @@ private enum class Screen {
 @Composable
 fun SimpleApp() {
 
-    var screen by remember {
+    var screen by rememberSaveable {
         mutableStateOf(
             if (
                 SupabaseRepository
@@ -69,3 +70,4 @@ fun SimpleApp() {
             )
     }
 }
+
